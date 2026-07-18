@@ -5,10 +5,10 @@
   "summary": "从用户参考图提炼的冰蓝渐变、三栏工作区与复古桌面软件质感；预览含 QQ 企鹅怀旧同人元素，非腾讯官方产品。",
   "author": {
     "name": "SkinDex × You",
-    "url": "https://codex-theme-hub-cn.jyyang040703.chatgpt.site/"
+    "url": "https://codex-skindex.vercel.app/"
   },
   "source": {
-    "repository": "https://codex-theme-hub-cn.jyyang040703.chatgpt.site/",
+    "repository": "https://codex-skindex.vercel.app/",
     "revision": "skindex-lab@2026-07-18",
     "license": "NOASSERTION"
   },
@@ -17,7 +17,7 @@
     "os": ["macos", "windows", "linux"]
   },
   "preview": {
-    "imageUrl": "https://codex-theme-hub-cn.jyyang040703.chatgpt.site/themes/blue-messenger-2007.png"
+    "imageUrl": "https://codex-skindex.vercel.app/themes/blue-messenger-2007.png"
   },
   "package": {
     "format": "codex-theme-v1",

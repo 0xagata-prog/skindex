@@ -62,7 +62,7 @@ const filters = ["全部", "桌面端", "CLI", "深色", "浅色", "双模式"] 
 
 const githubRepoUrl = "https://github.com/0xagata-prog/skindex";
 const skillSourceUrl = `${githubRepoUrl}/tree/main/skill`;
-const skindexOrigin = "https://codex-theme-hub-cn.jyyang040703.chatgpt.site";
+const skindexOrigin = "https://codex-skindex.vercel.app";
 const SKINDEX_SKILL_READY_KEY = "skindex-skill-ready-v1";
 const SKINDEX_SAVED_KEY = "skindex-saved-v1";
 

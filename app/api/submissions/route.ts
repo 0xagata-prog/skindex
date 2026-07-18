@@ -2,6 +2,7 @@ import { getDb } from "../../../db";
 import { submissions } from "../../../db/schema";
 import { PENDING_REVIEW_STATUS, pendingReviewResult } from "../../../lib/review-policy";
 import { ensureThemeData } from "../../../lib/theme-seed";
+import { isTrustedBrowserOrigin } from "../../../lib/trusted-origin";
 
 const allowedPlatforms = new Set(["桌面端", "CLI", "全平台"]);
 
@@ -17,8 +18,7 @@ function isGitHubRepoUrl(value: string) {
 
 export async function POST(request: Request) {
   try {
-    const origin = request.headers.get("origin");
-    if (origin !== new URL(request.url).origin) {
+    if (!isTrustedBrowserOrigin(request)) {
       return Response.json({ error: "跨站投稿请求已拒绝" }, { status: 403 });
     }
     if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) {

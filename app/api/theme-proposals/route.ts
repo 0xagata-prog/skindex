@@ -4,6 +4,7 @@ import { ensureThemeData } from "../../../lib/theme-seed";
 import { matchesImageSignature } from "../../../lib/image-security";
 import { PENDING_REVIEW_STATUS, pendingReviewResult } from "../../../lib/review-policy";
 import { getThemeAssets } from "../../../storage";
+import { isTrustedBrowserOrigin } from "../../../lib/trusted-origin";
 
 const allowedPlatforms = new Set(["桌面端", "CLI", "全平台"]);
 const allowedMimeTypes = new Set(["image/png", "image/jpeg", "image/webp"]);
@@ -29,10 +30,9 @@ function safeExtension(type: string) {
 export async function POST(request: Request) {
   let uploadedKey = "";
   try {
-    const requestOrigin = new URL(request.url).origin;
     const origin = request.headers.get("origin");
     const skillClient = request.headers.get("x-skindex-client");
-    const sameOriginBrowser = origin === requestOrigin;
+    const sameOriginBrowser = isTrustedBrowserOrigin(request);
     const trustedSkillClient = !origin && skillClient === "skindex-skill-v1";
     if (!sameOriginBrowser && !trustedSkillClient) {
       return Response.json({ error: "投稿客户端无法验证" }, { status: 403 });

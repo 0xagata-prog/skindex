@@ -15,7 +15,7 @@ const FORMAT_ADAPTERS = Object.freeze({
 });
 
 const AVAILABLE_ADAPTERS = new Set(["codex-native-v1"]);
-const DEFAULT_ENDPOINT = "https://codex-theme-hub-cn.jyyang040703.chatgpt.site";
+const DEFAULT_ENDPOINT = "https://codex-skindex.vercel.app";
 const FORBIDDEN_KEYS = new Set([
   "command",
   "commands",

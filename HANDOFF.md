@@ -1,44 +1,29 @@
 Goal:
-Unify the public product, repository, standalone Skill, command, protocol, and release asset under SkinDex, while keeping the existing Sites hostname and legacy download redirects usable.
+Publish SkinDex at the owner-selected canonical URL `https://codex-skindex.vercel.app` while preserving the existing ChatGPT Sites deployment as the D1/R2/SIWC backend.
 
 Current state:
-The public GitHub repository is now `https://github.com/0xagata-prog/skindex`. The source is fully migrated to the canonical Skill name `skindex`, explicit invocation `$skindex`, deep-link field `skindex_request`, Manifest schema `skindex/v1`, and client marker `skindex-skill-v1`. The Skill source is the simple repository folder `skill/`; catalog and schema files are at `catalog/` and `schemas/`. The old plugin source bundle was removed because public plugin distribution remains deferred.
-
-The website installer is now a short Codex task invoking the built-in `$skill-installer` against `https://github.com/0xagata-prog/skindex/tree/main/skill`, explicitly naming the installation `skindex`. The UI no longer explains download locations or offers a manual ZIP as the primary path. Theme deep links require the installed `skindex` Skill and carry `skindex_request`.
-
-Sites version 15 is published with the new SkinDex flow and display title. Legacy website routes remain as compatibility redirects or retirement responses. The public Sites hostname still contains `codex-theme-hub-cn` because that hosted slug cannot be renamed; there is no Vercel project in the connected account. A new URL requires binding an owner-controlled custom domain to Sites. The reviewer allowlist prefers `SKINDEX_REVIEWER_EMAIL` but temporarily falls back to the already-deployed `THEME_HUB_REVIEWER_EMAIL` secret so owner review is not broken.
+The public GitHub repository is `https://github.com/0xagata-prog/skindex`. The canonical Skill name is `skindex`, invocation is `$skindex`, protocol is `skindex/v1`, and the released repository Skill remains the installation source. A Vercel project named `codex-skindex` now owns the exact production alias `https://codex-skindex.vercel.app` and proxies public routes to the existing Sites backend. The latest verified Vercel deployment is `dpl_AJofAb6M4b9KoKWbjuvmF6kPpVP9` in project `prj_FDYkpssqLPLqHcJUdFHPrZnumHv4`; it is READY with no alias error.
 
 Files touched or relevant:
 README.md
-docs/skindex-framework.md
-docs/skill-install.txt
-skill/SKILL.md
-skill/agents/openai.yaml
-skill/references/deep-link-v1.md
-skill/references/manifest-v1.md
-skill/scripts/skindex.mjs
-catalog/*.json
-schemas/theme-manifest-v1.schema.json
-app/page.tsx
 app/layout.tsx
-app/downloads/skindex-skill.zip/route.ts
-app/downloads/theme-hub-skill.zip/route.ts
-app/downloads/codex-theme-hub-plugin.zip/route.ts
-lib/theme-manifest.ts
-lib/theme-capability.ts
-lib/reviewer-auth.ts
-.github/workflows/release-skill.yml
+app/page.tsx
+app/api/submissions/route.ts
+app/api/theme-proposals/route.ts
+lib/trusted-origin.ts
+lib/theme-seed.ts
+catalog/blue-messenger-2007.json
+skill/scripts/skindex.mjs
+vercel-proxy/vercel.json
+vercel-proxy/fallback.html
 tests/skindex-adapter.test.mjs
 tests/rendered-html.test.mjs
 
 Important decisions:
-Use the built-in `$skill-installer` for the main installation flow. Keep GitHub as the only source and version layer. Keep final Codex Appearance confirmation and restore points. Do not distribute a plugin until it is publicly listed. Preserve legacy website routes and the server-side reviewer environment fallback only as migration compatibility; do not show the old `$theme-hub` command in the main product flow.
-
-Verification:
-Skill Creator validation passes. `npm run test:skindex` passes 13/13 tests. `npm test` passes the production build and 4/4 product/security tests. `npm run lint` and `git diff --check` pass. GitHub Actions published `v0.4.0`; the released `skindex-skill.zip` passes `unzip -t` with SHA-256 `8d989fe876a70cb2f5bc267393127bd52f103a2771da178b9ea9bdc527a332cd`. The official `$skill-installer` helper successfully installed the live GitHub `skill/` path into a temporary `skindex` destination and Skill Creator validated that installed copy. Production smoke tests found HTTP 200 for the homepage, `skindex/v1` for a live Manifest, a 307 from the new Skill download route to GitHub, and a 307 from `/review` to Sign in with ChatGPT. A legacy download redirect bug was found and fixed locally after version 15; republish this small fix.
+Vercel is the public URL layer only; ChatGPT Sites remains the data, object storage, and owner-auth backend. Browser-origin checks use an exact allowlist for `codex-skindex.vercel.app` and the legacy Sites origin, never a wildcard for `vercel.app`. The owner review login may redirect to the legacy Sites hostname because SIWC remains hosted there. The old Sites hostname stays live for compatibility. The Skill default endpoint and all official product links use the new Vercel URL.
 
 What to do next:
-Commit and push the legacy redirect fix plus this handoff, publish the resulting Sites version, and confirm the legacy route returns 307 instead of 500. To replace the visible `codex-theme-hub-cn.jyyang040703.chatgpt.site` hostname, ask the owner for the exact custom domain they control and attach it with Sites custom-domain management.
+Commit and push the canonical-domain migration, publish the matching Sites backend version, verify browser-origin POST behavior through Vercel, publish a new Skill patch release because its default endpoint changed, and smoke-test the homepage, catalog, download redirect, Skill manifest, and review redirect through the new domain.
 
 Known risks:
-The public Sites slug cannot be renamed and the connected Vercel account currently has no projects, so do not create a duplicate Vercel deployment: the app depends on Sites D1, R2, and Sign in with ChatGPT. A new public URL needs an owner-controlled custom domain. The current production reviewer secret still uses the legacy environment variable until a separate hosted-secret migration is completed.
+The public URL layer depends on the existing Sites backend, so a Sites outage affects the Vercel URL. Sign in with ChatGPT still uses the legacy Sites origin. Seeded D1 rows keep stored legacy URLs until the backend update logic refreshes them; newly rendered metadata and Skill links already use the canonical Vercel address.

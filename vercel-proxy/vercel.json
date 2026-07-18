@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "https://codex-theme-hub-cn.jyyang040703.chatgpt.site/"
+    },
+    {
+      "source": "/:path*",
+      "destination": "https://codex-theme-hub-cn.jyyang040703.chatgpt.site/:path*"
+    }
+  ]
+}

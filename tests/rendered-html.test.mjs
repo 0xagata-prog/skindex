@@ -94,3 +94,20 @@ test("protects the owner-only review surface on every server boundary", async ()
   assert.match(privatePreview, /Cache-Control": "private, no-store"/);
   assert.match(publicPreview, /eq\(themeProposals\.status, APPROVED_THEME_STATUS\)/);
 });
+
+test("publishes SkinDex through a narrow Vercel proxy while Sites keeps the backend", async () => {
+  const [proxy, page, skill, trustedOrigin] = await Promise.all([
+    source("../vercel-proxy/vercel.json"),
+    source("../app/page.tsx"),
+    source("../skill/scripts/skindex.mjs"),
+    source("../lib/trusted-origin.ts"),
+  ]);
+
+  assert.match(proxy, /codex-theme-hub-cn\.jyyang040703\.chatgpt\.site/);
+  assert.match(proxy, /"source": "\/"/);
+  assert.match(proxy, /"source": "\/:path\*"/);
+  assert.match(page, /https:\/\/codex-skindex\.vercel\.app/);
+  assert.match(skill, /https:\/\/codex-skindex\.vercel\.app/);
+  assert.match(trustedOrigin, /https:\/\/codex-skindex\.vercel\.app/);
+  assert.doesNotMatch(trustedOrigin, /vercel\.app\$|endsWith/);
+});

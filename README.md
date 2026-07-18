@@ -2,7 +2,7 @@
 
 Codex 口袋皮肤图鉴：在一个目录里发现真实主题，用 `$skindex` 推荐、生成、安全导入和投稿主题。
 
-- 官网：<https://codex-theme-hub-cn.jyyang040703.chatgpt.site/>
+- 官网：<https://codex-skindex.vercel.app/>
 - Skill 源码：[skill](skill)
 - 产品框架：[docs/skindex-framework.md](docs/skindex-framework.md)
 

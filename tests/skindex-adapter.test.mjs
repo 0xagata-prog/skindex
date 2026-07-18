@@ -5,6 +5,7 @@ import path from "node:path";
 import test from "node:test";
 import { matchesImageSignature } from "../lib/image-security.ts";
 import { getThemeInstallability } from "../lib/theme-capability.ts";
+import { isTrustedBrowserOrigin } from "../lib/trusted-origin.ts";
 
 import {
   confirmTransaction,
@@ -178,4 +179,13 @@ test("marks consented proposal requests as SkinDex Skill traffic", async () => {
   assert.equal(result.status, "pending");
   assert.equal(result.public, false);
   assert.equal(result.publication, "review-required");
+});
+
+test("trusts the canonical Vercel origin without opening arbitrary cross-site posts", () => {
+  assert.equal(isTrustedBrowserOrigin(new Request("https://codex-theme-hub-cn.jyyang040703.chatgpt.site/api/submissions", {
+    headers: { Origin: "https://codex-skindex.vercel.app" },
+  })), true);
+  assert.equal(isTrustedBrowserOrigin(new Request("https://codex-theme-hub-cn.jyyang040703.chatgpt.site/api/submissions", {
+    headers: { Origin: "https://attacker.example" },
+  })), false);
 });
