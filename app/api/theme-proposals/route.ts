@@ -6,6 +6,11 @@ import { PENDING_REVIEW_STATUS, pendingReviewResult } from "../../../lib/review-
 import { getThemeAssets } from "../../../storage";
 import { isTrustedBrowserOrigin } from "../../../lib/trusted-origin";
 import { capacityResponse, submissionCapacity } from "../../../lib/submission-guard";
+import {
+  THEME_CARD_STANDARD,
+  validateThemeIdentity,
+  validateThemePreviewDimensions,
+} from "../../../lib/theme-standard";
 
 const allowedPlatforms = new Set(["桌面端", "CLI", "全平台"]);
 const allowedMimeTypes = new Set(["image/png", "image/jpeg", "image/webp"]);
@@ -59,18 +64,17 @@ export async function POST(request: Request) {
     const themeName = metadata.themeName?.trim() ?? "";
     const authorName = metadata.authorName?.trim() ?? "";
     const platform = metadata.platform?.trim() ?? "";
-    const notes = metadata.notes?.trim().slice(0, 500) ?? "";
+    const notes = metadata.notes?.trim() ?? "";
     const palette = Array.isArray(metadata.palette) ? metadata.palette.map(String) : [];
     const sourceType = metadata.sourceType === "reference-image" ? "reference-image" : "skill-generated";
 
     if (metadata.consent !== true) {
       return Response.json({ error: "提交前需要用户明确同意上传预览图并进入审核" }, { status: 400 });
     }
-    if (themeName.length < 2 || themeName.length > 80) {
-      return Response.json({ error: "主题名称需为 2–80 个字符" }, { status: 400 });
-    }
-    if (authorName.length < 2 || authorName.length > 60) {
-      return Response.json({ error: "作者名称需为 2–60 个字符" }, { status: 400 });
+    const identityError = validateThemeIdentity(themeName, authorName);
+    if (identityError) return Response.json({ error: identityError }, { status: 400 });
+    if (notes.length > THEME_CARD_STANDARD.descriptionMax) {
+      return Response.json({ error: `主题简介不能超过 ${THEME_CARD_STANDARD.descriptionMax} 个字符` }, { status: 400 });
     }
     if (!allowedPlatforms.has(platform)) {
       return Response.json({ error: "不支持的平台类型" }, { status: 400 });
@@ -85,6 +89,8 @@ export async function POST(request: Request) {
     const previewBytes = await preview.arrayBuffer();
     const imageInspection = inspectImageUpload(preview.type, previewBytes);
     if (!imageInspection.ok) return Response.json({ error: imageInspection.error }, { status: 400 });
+    const dimensionError = validateThemePreviewDimensions(imageInspection.width, imageInspection.height);
+    if (dimensionError) return Response.json({ error: dimensionError }, { status: 400 });
 
     const id = crypto.randomUUID();
     uploadedKey = `theme-proposals/${id}/preview.${safeExtension(preview.type)}`;

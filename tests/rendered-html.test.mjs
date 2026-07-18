@@ -58,6 +58,36 @@ test("routes theme actions through declared support levels", async () => {
   assert.match(skill, /`verified`, `staged`, `awaiting-confirmation`, or `confirmed`/);
 });
 
+test("paginates the catalog on the server and fixes the publishing format", async () => {
+  const [page, themesRoute, proposalRoute, submissionRoute, reviewRoute, standard, pagination, styles] = await Promise.all([
+    source("../app/page.tsx"),
+    source("../app/api/themes/route.ts"),
+    source("../app/api/theme-proposals/route.ts"),
+    source("../app/api/submissions/route.ts"),
+    source("../app/api/review/[kind]/[id]/route.ts"),
+    source("../lib/theme-standard.ts"),
+    source("../lib/theme-pagination.ts"),
+    source("../app/globals.css"),
+  ]);
+
+  assert.match(pagination, /THEME_CATALOG_PAGE_SIZE = 24/);
+  assert.match(themesRoute, /\.limit\(pagination\.pageSize\)/);
+  assert.match(themesRoute, /\.offset\(pagination\.offset\)/);
+  assert.match(themesRoute, /countDistinct\(themes\.sourceRepo\)/);
+  assert.match(themesRoute, /catalogFilter\(filter\)/);
+  assert.match(page, /catalog-pagination/);
+  assert.match(page, /window\.history\.replaceState/);
+  assert.match(page, /第 \{pagination\.page\} \/ \{pagination\.totalPages\} 页/);
+  assert.match(styles, /\.catalog-pagination \.page-numbers \{ display: none; \}/);
+  assert.match(standard, /nameMax: 64/);
+  assert.match(standard, /descriptionMax: 180/);
+  assert.match(standard, /tagMax: 4/);
+  assert.match(proposalRoute, /validateThemePreviewDimensions/);
+  assert.match(submissionRoute, /validateThemeIdentity/);
+  assert.match(reviewRoute, /normalizeCatalogDescription/);
+  assert.match(reviewRoute, /normalizeCatalogTags/);
+});
+
 test("keeps every submission private until review approval", async () => {
   const [page, submissionsRoute, proposalsRoute, themesRoute, policy, skill, script] = await Promise.all([
     source("../app/page.tsx"),

@@ -6,6 +6,13 @@ import test from "node:test";
 import { inspectImageUpload, matchesImageSignature } from "../lib/image-security.ts";
 import { getThemeInstallability } from "../lib/theme-capability.ts";
 import { isTrustedBrowserOrigin } from "../lib/trusted-origin.ts";
+import { getThemePagination, THEME_CATALOG_PAGE_SIZE } from "../lib/theme-pagination.ts";
+import {
+  normalizeCatalogDescription,
+  normalizeCatalogTags,
+  validateThemeIdentity,
+  validateThemePreviewDimensions,
+} from "../lib/theme-standard.ts";
 
 import {
   confirmTransaction,
@@ -142,6 +149,30 @@ test("queries the live catalog shape without inventing install support", async (
   assert.equal(result.themes[0].id, "native-blue");
   assert.equal(result.themes[0].nativeImport, true);
   assert.deepEqual(result.themes[0].install, { supportLevel: "native", action: "guided-import" });
+});
+
+test("keeps a 500-theme catalog bounded and clamps invalid pages", () => {
+  assert.equal(THEME_CATALOG_PAGE_SIZE, 24);
+  assert.deepEqual(getThemePagination(500, 1), {
+    page: 1,
+    pageSize: 24,
+    total: 500,
+    totalPages: 21,
+    hasPrevious: false,
+    hasNext: true,
+    offset: 0,
+  });
+  assert.equal(getThemePagination(500, 999).page, 21);
+  assert.equal(getThemePagination(500, 999).offset, 480);
+});
+
+test("normalizes every future catalog card to the publishing standard", () => {
+  assert.equal(validateThemeIdentity("Merchant Theme", "Theme Studio"), null);
+  assert.match(validateThemeIdentity("x".repeat(65), "Theme Studio"), /2–64/);
+  assert.equal(normalizeCatalogDescription(`  ${"a".repeat(220)}  `).length, 180);
+  assert.deepEqual(normalizeCatalogTags(["精选", "精选", "超长标签名称需要被安全截断", "桌面端", "浅色", "额外"]), ["精选", "超长标签名称需要被安全截断", "桌面端", "浅色"]);
+  assert.equal(validateThemePreviewDimensions(1600, 900), null);
+  assert.match(validateThemePreviewDimensions(600, 900), /横向构图|至少需要/);
 });
 
 test("classifies catalog actions by verified adapter support", () => {

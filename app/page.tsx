@@ -37,8 +37,19 @@ type Theme = {
 
 type CatalogResponse = {
   themes: Theme[];
+  featuredTheme: Theme | null;
   stats: { themes: number; sources: number; creators: number };
+  pagination: CatalogPagination;
   syncedAt: string;
+};
+
+type CatalogPagination = {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  hasPrevious: boolean;
+  hasNext: boolean;
 };
 
 type InstallGuide = {
@@ -65,6 +76,17 @@ const skillSourceUrl = `${githubRepoUrl}/tree/v0.5.0/skill`;
 const skindexOrigin = "https://codex-skindex.vercel.app";
 const SKINDEX_SKILL_READY_KEY = "skindex-skill-ready-v1";
 const SKINDEX_SAVED_KEY = "skindex-saved-v1";
+const emptyPagination: CatalogPagination = { page: 1, pageSize: 24, total: 0, totalPages: 0, hasPrevious: false, hasNext: false };
+
+function pageItems(page: number, totalPages: number) {
+  if (totalPages <= 7) return Array.from({ length: totalPages }, (_, index) => index + 1);
+  const visible = new Set([1, totalPages, page - 1, page, page + 1]);
+  const pages = [...visible].filter((item) => item >= 1 && item <= totalPages).sort((a, b) => a - b);
+  return pages.flatMap<(number | string)>((item, index) => {
+    const previous = pages[index - 1];
+    return previous && item - previous > 1 ? [`gap-${previous}-${item}`, item] : [item];
+  });
+}
 
 function codexPromptUrl(prompt: string) {
   return `codex://new?prompt=${encodeURIComponent(prompt)}`;
@@ -218,12 +240,17 @@ function ThemeCard({
 
 export default function Home() {
   const [themes, setThemes] = useState<Theme[]>([]);
+  const [featuredTheme, setFeaturedTheme] = useState<Theme | null>(null);
   const [stats, setStats] = useState({ themes: 0, sources: 0, creators: 0 });
+  const [pagination, setPagination] = useState<CatalogPagination>(emptyPagination);
   const [syncedAt, setSyncedAt] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [filter, setFilter] = useState<(typeof filters)[number]>("全部");
+  const [page, setPage] = useState(1);
+  const [catalogReady, setCatalogReady] = useState(false);
   const [saved, setSaved] = useState<string[]>([]);
   const [selected, setSelected] = useState<Theme | null>(null);
   const [installTheme, setInstallTheme] = useState<Theme | null>(null);
@@ -250,40 +277,80 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    let active = true;
-    fetch("/api/themes")
-      .then(async (response) => {
-        if (!response.ok) throw new Error("主题目录暂时无法读取");
-        return response.json() as Promise<CatalogResponse>;
-      })
-      .then((data) => {
-        if (!active) return;
-        setThemes(data.themes);
-        setStats(data.stats);
-        setSyncedAt(data.syncedAt);
-      })
-      .catch((error) => {
-        if (active) setLoadError(error instanceof Error ? error.message : "主题目录暂时无法读取");
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => { active = false; };
+    const task = window.setTimeout(() => {
+      const params = new URLSearchParams(window.location.search);
+      const initialQuery = params.get("q")?.trim().slice(0, 80) ?? "";
+      const initialFilter = params.get("filter");
+      const initialPage = Number.parseInt(params.get("page") ?? "1", 10);
+      setQuery(initialQuery);
+      setDebouncedQuery(initialQuery);
+      if (initialFilter && filters.includes(initialFilter as (typeof filters)[number])) {
+        setFilter(initialFilter as (typeof filters)[number]);
+      }
+      setPage(Number.isFinite(initialPage) && initialPage > 0 ? initialPage : 1);
+      setCatalogReady(true);
+    }, 0);
+    return () => window.clearTimeout(task);
   }, []);
 
-  const visibleThemes = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    return themes.filter((theme) => {
-      const matchesFilter =
-        filter === "全部" ||
-        theme.platform === filter ||
-        theme.platform === "全平台" && (filter === "桌面端" || filter === "CLI") ||
-        theme.mode === filter ||
-        theme.mode === "双模式" && (filter === "深色" || filter === "浅色");
-      const haystack = `${theme.name} ${theme.author} ${theme.sourceName} ${theme.sourceRepo} ${theme.tags.join(" ")}`.toLowerCase();
-      return matchesFilter && (!normalized || haystack.includes(normalized));
-    });
-  }, [filter, query, themes]);
+  useEffect(() => {
+    if (!catalogReady || query === debouncedQuery) return;
+    const task = window.setTimeout(() => {
+      setDebouncedQuery(query.trim().slice(0, 80));
+      setPage(1);
+    }, 300);
+    return () => window.clearTimeout(task);
+  }, [catalogReady, debouncedQuery, query]);
+
+  useEffect(() => {
+    if (!catalogReady) return;
+    const controller = new AbortController();
+    const params = new URLSearchParams();
+    params.set("page", String(page));
+    if (debouncedQuery) params.set("q", debouncedQuery);
+    if (filter !== "全部") params.set("filter", filter);
+    const task = window.setTimeout(() => {
+      setLoading(true);
+      setLoadError("");
+      fetch(`/api/themes?${params.toString()}`, { signal: controller.signal })
+        .then(async (response) => {
+          if (!response.ok) throw new Error("主题目录暂时无法读取");
+          return response.json() as Promise<CatalogResponse>;
+        })
+        .then((data) => {
+          setThemes(data.themes);
+          setFeaturedTheme(data.featuredTheme);
+          setStats(data.stats);
+          setPagination(data.pagination);
+          setSyncedAt(data.syncedAt);
+          if (data.pagination.page !== page) setPage(data.pagination.page);
+          const nextUrl = new URL(window.location.href);
+          if (debouncedQuery) nextUrl.searchParams.set("q", debouncedQuery); else nextUrl.searchParams.delete("q");
+          if (filter !== "全部") nextUrl.searchParams.set("filter", filter); else nextUrl.searchParams.delete("filter");
+          if (data.pagination.page > 1) nextUrl.searchParams.set("page", String(data.pagination.page)); else nextUrl.searchParams.delete("page");
+          window.history.replaceState(null, "", `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`);
+        })
+        .catch((error) => {
+          if (error instanceof DOMException && error.name === "AbortError") return;
+          setLoadError(error instanceof Error ? error.message : "主题目录暂时无法读取");
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoading(false);
+        });
+    }, 0);
+    return () => {
+      window.clearTimeout(task);
+      controller.abort();
+    };
+  }, [catalogReady, debouncedQuery, filter, page]);
+
+  const paginationItems = useMemo(() => pageItems(pagination.page, pagination.totalPages), [pagination.page, pagination.totalPages]);
+
+  const changePage = (nextPage: number) => {
+    if (nextPage < 1 || nextPage > pagination.totalPages || nextPage === pagination.page) return;
+    setPage(nextPage);
+    document.getElementById("themes")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const toggleSaved = (id: string) => {
     setSaved((current) => {
@@ -367,7 +434,7 @@ export default function Home() {
     }
   };
 
-  const featured = themes.find((theme) => theme.featured) ?? themes[0];
+  const featured = featuredTheme ?? themes.find((theme) => theme.featured) ?? themes[0];
 
   return (
     <main>
@@ -444,21 +511,35 @@ export default function Home() {
         </div>
         <div className="filter-row">
           <div className="filter-tabs" aria-label="主题筛选">
-            {filters.map((item) => <button key={item} className={filter === item ? "active" : ""} onClick={() => setFilter(item)} aria-pressed={filter === item}>{item}</button>)}
+            {filters.map((item) => <button key={item} className={filter === item ? "active" : ""} onClick={() => { setFilter(item); setPage(1); }} aria-pressed={filter === item}>{item}</button>)}
           </div>
-          <span>{loading ? "正在读取…" : `${visibleThemes.length} 个结果`}</span>
+          <span>{loading ? "正在读取…" : `${pagination.total} 个结果`}</span>
         </div>
 
         {loading ? (
           <div className="catalog-loading" aria-live="polite">正在从主题数据库读取真实目录…</div>
         ) : loadError ? (
           <div className="empty-state"><span>!</span><h3>目录暂时不可用</h3><p>{loadError}</p><button onClick={() => window.location.reload()}>重新加载</button></div>
-        ) : visibleThemes.length > 0 ? (
-          <div className="theme-grid">
-            {visibleThemes.map((theme) => <ThemeCard key={theme.id} theme={theme} saved={saved.includes(theme.id)} onSave={() => toggleSaved(theme.id)} onOpen={() => setSelected(theme)} />)}
-          </div>
+        ) : themes.length > 0 ? (
+          <>
+            <div className="theme-grid">
+              {themes.map((theme) => <ThemeCard key={theme.id} theme={theme} saved={saved.includes(theme.id)} onSave={() => toggleSaved(theme.id)} onOpen={() => setSelected(theme)} />)}
+            </div>
+            {pagination.totalPages > 1 && (
+              <nav className="catalog-pagination" aria-label="主题目录分页">
+                <button className="page-direction" onClick={() => changePage(pagination.page - 1)} disabled={!pagination.hasPrevious}>← 上一页</button>
+                <div className="page-numbers">
+                  {paginationItems.map((item) => typeof item === "number" ? (
+                    <button key={item} className={item === pagination.page ? "active" : ""} onClick={() => changePage(item)} aria-current={item === pagination.page ? "page" : undefined}>{item}</button>
+                  ) : <span key={item} aria-hidden="true">…</span>)}
+                </div>
+                <span className="page-summary">第 {pagination.page} / {pagination.totalPages} 页</span>
+                <button className="page-direction" onClick={() => changePage(pagination.page + 1)} disabled={!pagination.hasNext}>下一页 →</button>
+              </nav>
+            )}
+          </>
         ) : (
-          <div className="empty-state"><span>⌕</span><h3>没有找到对应主题</h3><p>换个关键词，或清除当前筛选条件。</p><button onClick={() => { setQuery(""); setFilter("全部"); }}>查看全部主题</button></div>
+          <div className="empty-state"><span>⌕</span><h3>没有找到对应主题</h3><p>换个关键词，或清除当前筛选条件。</p><button onClick={() => { setQuery(""); setDebouncedQuery(""); setFilter("全部"); setPage(1); }}>查看全部主题</button></div>
         )}
       </section>
 
@@ -598,11 +679,19 @@ export default function Home() {
             <span className="section-index">GITHUB SUBMISSION</span>
             <h2 id="submit-title">提交真实主题仓库</h2>
             <p>首版不要求账号登录。提交只会进入私有审核队列；我们核验仓库归属、许可、主题文件和真实预览后，审核通过才会公开。</p>
+            <div className="submission-standard" aria-label="SkinDex 统一上架标准">
+              <b>统一上架标准</b>
+              <span>横向预览图，建议 16:9</span>
+              <span>标题最多 64 字符</span>
+              <span>简介最多 180 字符</span>
+              <span>标签最多 4 个</span>
+              <span>所有卡片使用统一布局</span>
+            </div>
             {submitState === "success" ? (
               <div className="success-state"><span>✓</span><h3>已保存到审核队列</h3><p>{submitMessage}</p><button onClick={() => { setSubmitOpen(false); setSubmitState("idle"); }}>完成</button></div>
             ) : (
               <form onSubmit={submitTheme}>
-                <label>主题名称<input name="themeName" required minLength={2} maxLength={80} placeholder="例如：Shanghai After Dark" /></label>
+                <label>主题名称<input name="themeName" required minLength={2} maxLength={64} placeholder="例如：Shanghai After Dark" /></label>
                 <label>作者名称<input name="authorName" required minLength={2} maxLength={60} placeholder="你的 GitHub 名称" /></label>
                 <label>GitHub 仓库<input name="repoUrl" type="url" required pattern="https://github\.com/.+/.+" placeholder="https://github.com/owner/repo" /></label>
                 <label>支持平台<select name="platform" defaultValue="桌面端"><option>桌面端</option><option>CLI</option><option>全平台</option></select></label>
