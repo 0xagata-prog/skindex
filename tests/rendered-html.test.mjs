@@ -31,11 +31,12 @@ test("uses Codex Skill Installer with GitHub as the canonical source", async () 
 });
 
 test("routes theme actions through declared support levels", async () => {
-  const [page, themesRoute, capability, skill] = await Promise.all([
+  const [page, themesRoute, capability, skill, styles] = await Promise.all([
     source("../app/page.tsx"),
     source("../app/api/themes/route.ts"),
     source("../lib/theme-capability.ts"),
     source("../skill/SKILL.md"),
+    source("../app/globals.css"),
   ]);
 
   assert.match(themesRoute, /install: getThemeInstallability\(theme\)/);
@@ -49,6 +50,11 @@ test("routes theme actions through declared support levels", async () => {
   assert.match(page, /skindex_request=/);
   assert.match(page, /暂不支持导入/);
   assert.doesNotMatch(page, /查看兼容状态/);
+  assert.match(page, /theme-status-pill/);
+  assert.doesNotMatch(page, /className=\{`compatibility/);
+  assert.match(styles, /\.theme-card \{[^}]*height: 100%;[^}]*display: flex;/);
+  assert.match(styles, /\.card-body \{[^}]*flex: 1;[^}]*display: flex;/);
+  assert.match(styles, /\.use-now-button \{[^}]*margin: auto 0 14px;/);
   assert.match(skill, /`verified`, `staged`, `awaiting-confirmation`, or `confirmed`/);
 });
 

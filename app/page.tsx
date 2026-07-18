@@ -210,7 +210,6 @@ function ThemeCard({
         <div className="card-footer">
           <span>★ {theme.stars}</span>
           <span className="source-label">{theme.sourceName}</span>
-          <span className={`compatibility is-${installGuide.supportLevel}`}>{installGuide.statusLabel}</span>
         </div>
       </div>
     </article>
