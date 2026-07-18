@@ -14,13 +14,16 @@ test("uses Codex Skill Installer with GitHub as the canonical source", async () 
 
   assert.match(page, /function skillInstallerChatUrl\(\)/);
   assert.match(page, /SKINDEX_SKILL_READY_KEY/);
-  assert.match(page, /还没安装：安装 SkinDex/);
+  assert.match(page, /安装或更新 SkinDex/);
   assert.match(page, /我已安装：在 Codex 中打开主题/);
-  assert.match(page, /若不存在，立即停止/);
-  assert.match(page, /不要读取项目文件，不要搜索网页/);
   assert.match(page, /\$skill-installer/);
   assert.match(page, /github\.com\/0xagata-prog\/skindex/);
-  assert.match(page, /skillSourceUrl = `\$\{githubRepoUrl\}\/tree\/v0\.5\.0\/skill`/);
+  assert.match(page, /skillSourceUrl = `\$\{githubRepoUrl\}\/tree\/v0\.5\.1\/skill`/);
+  assert.match(page, /SKINDEX_SKILL_READY_KEY = "skindex-skill-ready-v2"/);
+  assert.match(page, /return codexPromptUrl\(`\$skindex/);
+  assert.doesNotMatch(page, /若不存在，立即停止/);
+  assert.doesNotMatch(page, /先验证 Manifest、来源、兼容性与适配器/);
+  assert.match(page, /手动复制只作为备用，不会记录 SkinDex 恢复点/);
   assert.match(page, /用 Codex 安装/);
   assert.doesNotMatch(page, /目标目录/);
   assert.doesNotMatch(page, /手动下载 Skill/);
@@ -75,6 +78,7 @@ test("paginates the catalog on the server and fixes the publishing format", asyn
   assert.match(themesRoute, /\.offset\(pagination\.offset\)/);
   assert.match(themesRoute, /countDistinct\(themes\.sourceRepo\)/);
   assert.match(themesRoute, /catalogFilter\(filter\)/);
+  assert.match(themesRoute, /themes\.description/);
   assert.match(page, /catalog-pagination/);
   assert.match(page, /window\.history\.replaceState/);
   assert.match(page, /第 \{pagination\.page\} \/ \{pagination\.totalPages\} 页/);

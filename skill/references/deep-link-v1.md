@@ -4,9 +4,8 @@ Use an explicit Skill invocation followed by a small structured request:
 
 ```text
 $skindex
-请安装并应用我选择的主题。
+安装官网主题“Chalkboard Green”。
 skindex_request={"version":"1","action":"install","themeId":"chalkboard-green","manifestUrl":"https://codex-skindex.vercel.app/api/themes?format=manifest&id=chalkboard-green"}
-要求：验证兼容性与完整性，创建恢复点，失败时不要改变当前主题。
 ```
 
 Generate the URL in the browser with:
@@ -15,7 +14,7 @@ Generate the URL in the browser with:
 const url = `codex://new?prompt=${encodeURIComponent(prompt)}`;
 ```
 
-The deep link opens a new local Codex chat and pre-fills the composer. It does not send automatically. The user sending the prompt is the install intent boundary.
+The deep link opens a new local Codex chat and pre-fills the composer. It does not send automatically. Keep the visible prompt this short: the Skill itself owns validation, recovery points, confirmation, and failure safety. The user sending the prompt is the install intent boundary.
 
 Only accept a `manifestUrl` on the exact official origin `https://codex-skindex.vercel.app`, with `/api/themes`, `format=manifest`, and an `id` equal to `themeId`. If any part differs, ignore the URL and fetch the official catalog entry by ID. Custom endpoints are for explicit testing only.
 

@@ -72,9 +72,9 @@ type InstallGuide = {
 const filters = ["全部", "桌面端", "CLI", "深色", "浅色", "双模式"] as const;
 
 const githubRepoUrl = "https://github.com/0xagata-prog/skindex";
-const skillSourceUrl = `${githubRepoUrl}/tree/v0.5.0/skill`;
+const skillSourceUrl = `${githubRepoUrl}/tree/v0.5.1/skill`;
 const skindexOrigin = "https://codex-skindex.vercel.app";
-const SKINDEX_SKILL_READY_KEY = "skindex-skill-ready-v1";
+const SKINDEX_SKILL_READY_KEY = "skindex-skill-ready-v2";
 const SKINDEX_SAVED_KEY = "skindex-saved-v1";
 const emptyPagination: CatalogPagination = { page: 1, pageSize: 24, total: 0, totalPages: 0, hasPrevious: false, hasNext: false };
 
@@ -92,16 +92,14 @@ function codexPromptUrl(prompt: string) {
   return `codex://new?prompt=${encodeURIComponent(prompt)}`;
 }
 
-function skillChatUrl(prompt: string) {
-  return codexPromptUrl(`先检查当前已安装技能列表中是否存在 skindex（显示名 SkinDex）。
-若不存在，立即停止：不要读取项目文件，不要搜索网页，不要请求 Manifest，不要创建恢复点，也不要尝试自行兼容。只回复“尚未安装 SkinDex，请先回官网完成安装，并在安装后开启新对话”。
-只有确认 skindex 已安装时，才调用 $skindex 执行以下请求：
-${prompt}`);
+function skindexChatUrl(request: string) {
+  return codexPromptUrl(`$skindex\n${request}`);
 }
 
 function skillInstallerChatUrl() {
   return codexPromptUrl(`$skill-installer
-请从 ${skillSourceUrl} 安装官方 SkinDex Skill，并将它安装为 skindex。安装完成后告诉我：开启新对话并使用 $skindex。`);
+安装官方 SkinDex Skill：${skillSourceUrl}
+安装名：skindex`);
 }
 
 function themeUseChatUrl(theme: Theme) {
@@ -111,9 +109,9 @@ function themeUseChatUrl(theme: Theme) {
     themeId: theme.id,
     manifestUrl: `${skindexOrigin}/api/themes?format=manifest&id=${encodeURIComponent(theme.id)}`,
   });
-  return skillChatUrl(`请使用官网主题“${theme.name}”。
-skindex_request=${request}
-先验证 Manifest、来源、兼容性与适配器，再创建恢复点并暂存。最终导入必须等待我在 Codex 外观设置中确认；失败时不要改变当前主题。`);
+  return codexPromptUrl(`$skindex
+安装官网主题“${theme.name}”。
+skindex_request=${request}`);
 }
 
 function getInstallGuide(theme: Theme): InstallGuide {
@@ -492,13 +490,13 @@ export default function Home() {
           </div>
         </div>
         <div className="conversation-grid" aria-label="SkinDex Skill 可以完成的对话">
-          <a href={skillChatUrl("把官网的蓝色信使 2007 配色应用到 Codex，并先创建恢复点。")}>
+          <a href={skindexChatUrl("应用官网的蓝色信使 2007 配色。")}>
             <span>01 / 应用主题</span><strong>“换成官网这个皮肤”</strong><p>读取主题资料，确认可用范围，再暂存并保留恢复点。</p><b>用 SkinDex 打开 ↗</b>
           </a>
-          <a href={skillChatUrl("我会发一张参考图片，请帮我生成一个原创 Codex 主题和预览。")}>
+          <a href={skindexChatUrl("参考我接下来发送的图片生成原创 Codex 主题。")}>
             <span>02 / 创作主题</span><strong>“参考这张图做一个”</strong><p>分析视觉语言，生成原创预览并提取可用配色。</p><b>用 SkinDex 打开 ↗</b>
           </a>
-          <a href={skillChatUrl("把刚生成的主题提交到 SkinDex；上传前先告诉我会公开哪些内容并等待确认。")}>
+          <a href={skindexChatUrl("把刚生成的主题投稿到 SkinDex。")}>
             <span>03 / 投稿主题</span><strong>“把这个主题发到官网”</strong><p>先展示将公开的内容，得到确认后再进入审核队列。</p><b>用 SkinDex 打开 ↗</b>
           </a>
         </div>
@@ -617,7 +615,7 @@ export default function Home() {
                 <>
                   <textarea className="theme-code" readOnly value={guide.copyValue} aria-label="完整主题设置" />
                   <button className="install-primary" onClick={() => copyThemeSetting(guide.copyValue!)}>
-                    {copyState === "copied" ? "已复制，去 Codex 导入 ✓" : "复制完整主题设置"}
+                    {copyState === "copied" ? "已复制，请在 Codex 外观中导入 ✓" : "备用：手动复制主题设置"}
                   </button>
                   {copyState === "error" && <p className="install-error">浏览器未允许复制，请手动选择上方完整设置。</p>}
                 </>
@@ -627,7 +625,7 @@ export default function Home() {
                   <a className="install-secondary" href={guide.secondaryUrl} target="_blank" rel="noreferrer">{guide.secondaryLabel}</a>
                 </div>
               )}
-              <p className="install-source">{guide.kind === "copy" ? "Skill 流程和手动导入都需要你在 Codex 内确认；网站不会静默修改外观。" : "本站只展示可追溯的原始来源，不重新打包、不执行第三方文件，也不声称当前已经支持一键导入。"}</p>
+              <p className="install-source">{guide.kind === "copy" ? "推荐使用 SkinDex 流程，它会创建恢复点。手动复制只作为备用，不会记录 SkinDex 恢复点；两种方式都需要你在 Codex 内确认。" : "本站只展示可追溯的原始来源，不重新打包、不执行第三方文件，也不声称当前已经支持一键导入。"}</p>
             </section>
           </div>
         );
@@ -638,10 +636,10 @@ export default function Home() {
           <section className="skill-gate-modal" role="dialog" aria-modal="true" aria-labelledby="skill-gate-title" onMouseDown={(event) => event.stopPropagation()}>
             <button className="modal-close" onClick={() => setPendingTheme(null)} aria-label="关闭 SkinDex 安装确认">×</button>
             <span className="section-index">FIRST USE · INSTALL CHECK</span>
-            <h2 id="skill-gate-title">使用主题前，先确认 SkinDex</h2>
+            <h2 id="skill-gate-title">使用主题前，先确认 SkinDex v0.5.1</h2>
             <p>官网无法读取你电脑上的 Codex 技能列表。未安装时直接打开主题，会让 Codex 无效搜索并浪费时间；请选择你的真实状态。</p>
             <div className="skill-gate-options">
-              <button className="install-primary" onClick={() => setSkillInstallOpen(true)}>还没安装：安装 SkinDex →</button>
+              <button className="install-primary" onClick={() => setSkillInstallOpen(true)}>安装或更新 SkinDex →</button>
               <button className="install-secondary" onClick={() => confirmSkillReady(pendingTheme)}>我已安装：在 Codex 中打开主题 →</button>
             </div>
             <p className="install-source">当前主题：<b>{pendingTheme.name}</b>。只有你确认已安装后，官网才会打开主题任务。</p>
@@ -654,7 +652,7 @@ export default function Home() {
           <section className="skill-install-modal" role="dialog" aria-modal="true" aria-labelledby="skill-install-title" onMouseDown={(event) => event.stopPropagation()}>
             <button className="modal-close" onClick={() => setSkillInstallOpen(false)} aria-label="关闭 Skill 安装说明">×</button>
             <span className="section-index">GUIDED INSTALL · GITHUB VERIFIED</span>
-            <h2 id="skill-install-title">安装一次，以后主题直接用</h2>
+            <h2 id="skill-install-title">安装或更新一次，以后主题直接用</h2>
             <p>点击后会打开 Codex，并由内置的 Skill Installer 从 SkinDex 官方 GitHub 安装。浏览器不会下载文件，也不会静默修改你的电脑。</p>
             <ol className="install-steps skill-install-steps">
               <li><span>01</span><p>点击“用 Codex 安装”</p></li>

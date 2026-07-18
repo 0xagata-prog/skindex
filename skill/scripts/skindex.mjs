@@ -16,6 +16,7 @@ const FORMAT_ADAPTERS = Object.freeze({
 
 const AVAILABLE_ADAPTERS = new Set(["codex-native-v1"]);
 const DEFAULT_ENDPOINT = "https://codex-skindex.vercel.app";
+const SKILL_VERSION = "0.5.1";
 const FORBIDDEN_KEYS = new Set([
   "command",
   "commands",
@@ -253,7 +254,7 @@ export function validateManifest(manifest) {
     errors.push("updatedAt must be an ISO date-time");
   }
   if (expectedAdapter && !AVAILABLE_ADAPTERS.has(expectedAdapter)) {
-    warnings.push(`${expectedAdapter} is recognized but unavailable in SkinDex Skill v0.5.0`);
+    warnings.push(`${expectedAdapter} is recognized but unavailable in SkinDex Skill v${SKILL_VERSION}`);
   }
 
   return { ok: errors.length === 0, errors, warnings };
@@ -323,7 +324,7 @@ async function writeJsonAtomic(filePath, value) {
 
 export async function stageManifest(manifest, { stateRoot = stateRootFromEnvironment(), now = () => new Date() } = {}) {
   const plan = planManifest(manifest, { stateRoot });
-  if (plan.status !== "ready") throw new Error(`${plan.adapter} is not available in SkinDex Skill v0.5.0`);
+  if (plan.status !== "ready") throw new Error(`${plan.adapter} is not available in SkinDex Skill v${SKILL_VERSION}`);
 
   const normalizedManifest = structuredClone(manifest);
   normalizedManifest.package.inline = canonicalNativePayload(manifest.package.inline);
@@ -456,19 +457,33 @@ function copyToClipboard(text) {
   throw new Error("no supported clipboard command is available");
 }
 
-export async function copyTransactionPayload(transactionId, { stateRoot = stateRootFromEnvironment() } = {}) {
+export async function copyTransactionPayload(transactionId, {
+  stateRoot = stateRootFromEnvironment(),
+  copyImpl = copyToClipboard,
+} = {}) {
   const { transaction } = await loadTransaction(stateRoot, transactionId);
   const payload = (await readFile(transaction.payloadPath, "utf8")).trimEnd();
-  const provider = copyToClipboard(payload);
-  return { status: "copied", transactionId, provider };
+  try {
+    const provider = copyImpl(payload);
+    return { status: "copied", transactionId, provider };
+  } catch {
+    return {
+      status: "copy-unavailable",
+      transactionId,
+      payload,
+      nextAction: "show-payload",
+      message: "System clipboard access is unavailable. Show the exact payload in a copyable text block.",
+    };
+  }
 }
 
 export async function readStatus({ stateRoot = stateRootFromEnvironment() } = {}) {
-  return readJsonOrDefault(path.join(stateRoot, "state.json"), {
+  const state = await readJsonOrDefault(path.join(stateRoot, "state.json"), {
     schemaVersion: "skindex-state/v1",
     active: null,
     installations: {},
   });
+  return { ...state, skillVersion: SKILL_VERSION };
 }
 
 function endpointUrl(endpoint, pathname, search = {}) {
@@ -488,8 +503,9 @@ async function responseJson(response) {
 }
 
 export async function catalogThemes({ endpoint = DEFAULT_ENDPOINT, query = "", fetchImpl = fetch } = {}) {
-  const data = await responseJson(await fetchImpl(endpointUrl(endpoint, "/api/themes")));
-  const normalized = query.trim().toLowerCase();
+  const requestedQuery = query.trim().slice(0, 80);
+  const data = await responseJson(await fetchImpl(endpointUrl(endpoint, "/api/themes", { q: requestedQuery })));
+  const normalized = requestedQuery.toLowerCase();
   const themes = Array.isArray(data.themes) ? data.themes : [];
   const matches = themes.filter((theme) => {
     if (!normalized) return true;
@@ -498,8 +514,8 @@ export async function catalogThemes({ endpoint = DEFAULT_ENDPOINT, query = "", f
   });
   return {
     endpoint,
-    query,
-    total: matches.length,
+    query: requestedQuery,
+    total: Number(data.pagination?.total ?? matches.length),
     themes: matches.slice(0, 8).map((theme) => ({
       id: theme.id,
       name: theme.name,

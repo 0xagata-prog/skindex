@@ -18,6 +18,7 @@ import {
 import {
   confirmTransaction,
   catalogThemes,
+  copyTransactionPayload,
   createLocalManifest,
   planManifest,
   readStatus,
@@ -118,6 +119,18 @@ test("stages, confirms, and resolves a restore point in managed storage", async 
   assert.match(await readFile(restore.payloadPath, "utf8"), /#18382B/);
 });
 
+test("returns a copyable payload when the sandbox blocks the system clipboard", async () => {
+  const stateRoot = await mkdtemp(path.join(tmpdir(), "skindex-copy-test-"));
+  const staged = await stageManifest(await sampleManifest(), { stateRoot });
+  const result = await copyTransactionPayload(staged.transactionId, {
+    stateRoot,
+    copyImpl: () => { throw new Error("clipboard denied"); },
+  });
+  assert.equal(result.status, "copy-unavailable");
+  assert.equal(result.nextAction, "show-payload");
+  assert.match(result.payload, /^codex-theme-v1:/);
+});
+
 test("uses the official default when no prior SkinDex theme exists", async () => {
   const stateRoot = await mkdtemp(path.join(tmpdir(), "skindex-test-"));
   const staged = await stageManifest(await sampleManifest(), { stateRoot });
@@ -141,12 +154,19 @@ test("creates a valid local theme manifest from generated colors", () => {
 });
 
 test("queries the live catalog shape without inventing install support", async () => {
-  const fetchImpl = async () => Response.json({ themes: [
-    { id: "native-blue", name: "Native Blue", description: "calm blue", mode: "浅色", platform: "桌面端", tags: ["蓝色"], verifiedVersion: "codex-theme-v1", sourceName: "Lab", install: { supportLevel: "native", action: "guided-import" } },
-    { id: "pet-scene", name: "Pet Scene", description: "animated pet", mode: "深色", platform: "桌面端", tags: ["伙伴"], verifiedVersion: "preview-only", sourceName: "Community", install: { supportLevel: "adapter-pending", action: "view-source" } },
-  ] });
+  let requestedUrl = "";
+  const fetchImpl = async (url) => {
+    requestedUrl = String(url);
+    return Response.json({
+      themes: [
+        { id: "native-blue", name: "Native Blue", description: "calm blue", mode: "浅色", platform: "桌面端", tags: ["蓝色"], verifiedVersion: "codex-theme-v1", sourceName: "Lab", install: { supportLevel: "native", action: "guided-import" } },
+      ],
+      pagination: { total: 31 },
+    });
+  };
   const result = await catalogThemes({ query: "blue", fetchImpl });
-  assert.equal(result.total, 1);
+  assert.match(requestedUrl, /\/api\/themes\?q=blue/);
+  assert.equal(result.total, 31);
   assert.equal(result.themes[0].id, "native-blue");
   assert.equal(result.themes[0].nativeImport, true);
   assert.deepEqual(result.themes[0].install, { supportLevel: "native", action: "guided-import" });

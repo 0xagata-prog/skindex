@@ -67,6 +67,7 @@ export async function GET(request: Request) {
     const searchCondition = query
       ? or(
         like(sql`lower(${themes.name})`, queryPattern),
+        like(sql`lower(${themes.description})`, queryPattern),
         like(sql`lower(${themes.author})`, queryPattern),
         like(sql`lower(${themes.sourceName})`, queryPattern),
         like(sql`lower(${themes.sourceRepo})`, queryPattern),

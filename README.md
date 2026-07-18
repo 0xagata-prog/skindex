@@ -12,7 +12,7 @@ Codex 口袋皮肤图鉴：在一个目录里发现真实主题，用 `$skindex`
 
 ```text
 $skill-installer
-请从 https://github.com/0xagata-prog/skindex/tree/v0.5.0/skill 安装官方 SkinDex Skill，并将它安装为 skindex。
+请从 https://github.com/0xagata-prog/skindex/tree/v0.5.1/skill 安装官方 SkinDex Skill，并将它安装为 skindex。
 ```
 
 安装完成后开启新对话：

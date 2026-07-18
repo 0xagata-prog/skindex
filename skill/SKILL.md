@@ -35,10 +35,10 @@ Use each result's `install.supportLevel` and `install.action` when available. Ex
 2. Run `node scripts/skindex.mjs validate --manifest <path>` and stop on any validation or integrity error.
 3. Run `node scripts/skindex.mjs plan --manifest <path>` and explain compatibility, managed storage, and the confirmation boundary.
 4. For `codex-native-v1`, run `node scripts/skindex.mjs stage --manifest <path>`.
-5. Run `node scripts/skindex.mjs copy --transaction <id>` and ask the user to paste it in **Codex → Settings → Appearance → Import**. A website or Skill prompt cannot silently change Codex appearance.
+5. Run `node scripts/skindex.mjs copy --transaction <id>` and ask the user to paste it in **Codex → Settings → Appearance → Import**. If the result is `copy-unavailable`, show its exact `payload` in a fenced `text` block so the user can use the message copy button; do not treat unavailable shell clipboard access as an installation failure. A website or Skill prompt cannot silently change Codex appearance.
 6. After the user confirms the visual change, run `node scripts/skindex.mjs confirm --transaction <id>`.
 
-An explicit “install and apply” prompt authorizes validation and staging of the selected data-only theme. It does not remove the final Codex import confirmation. Report the state as `verified`, `staged`, `awaiting-confirmation`, or `confirmed`; never call staging a completed installation.
+An explicit “install and apply” prompt authorizes validation and staging of the selected data-only theme. It does not remove the final Codex import confirmation. Report the state as `verified`, `staged`, `awaiting-confirmation`, or `confirmed`; never call staging a completed installation. Do not assume a sandboxed shell can write the operating-system clipboard.
 
 ## Create from an image
 
