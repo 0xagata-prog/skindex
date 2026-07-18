@@ -326,13 +326,20 @@ export default function Home() {
           platform: data.get("platform"),
           notes: data.get("notes"),
           website: data.get("website"),
+          publicationConsent: data.get("publicationConsent") === "on",
         }),
       });
-      const result = await response.json() as { error?: string };
+      const result = await response.json() as {
+        error?: string;
+        submission?: { id: string; status: "pending"; public: false; publication: "review-required" };
+      };
       if (!response.ok) throw new Error(result.error || "投稿保存失败");
+      if (!result.submission || result.submission.public !== false || result.submission.status !== "pending") {
+        throw new Error("投稿状态无法确认，请稍后重试");
+      }
       form.reset();
       setSubmitState("success");
-      setSubmitMessage("投稿已进入审核队列。我们只保存仓库信息，不复制你的素材。 ");
+      setSubmitMessage(`投稿已进入审核队列，编号 ${result.submission.id.slice(0, 8)}。审核通过前不会出现在官网；我们只保存仓库信息，不复制你的素材。`);
     } catch (error) {
       setSubmitState("error");
       setSubmitMessage(error instanceof Error ? error.message : "投稿保存失败");
@@ -403,7 +410,7 @@ export default function Home() {
             <span>02 / CREATE</span><strong>“参考这张图做一个”</strong><p>分析视觉语言、生成原创预览、提取配色并先保存在本地。</p><b>开始对话 ↗</b>
           </a>
           <a href={skillChatUrl("把刚生成的主题提交到 Theme Hub；上传前先告诉我会公开哪些内容并等待确认。")}>
-            <span>03 / SUBMIT</span><strong>“愿意提交到官网吗？”</strong><p>只有明确同意后才上传图片和主题信息，先进入审核，不会直接公开。</p><b>开始对话 ↗</b>
+            <span>03 / SUBMIT</span><strong>“做完后要不要投稿？”</strong><p>Skill 会主动询问一次；你表示愿意后，仍会展示上传内容并等待最终确认。</p><b>开始对话 ↗</b>
           </a>
         </div>
       </section>
@@ -556,7 +563,7 @@ export default function Home() {
             <button className="modal-close" onClick={() => { setSubmitOpen(false); setSubmitState("idle"); }} aria-label="关闭投稿窗口">×</button>
             <span className="section-index">GITHUB SUBMISSION</span>
             <h2 id="submit-title">提交真实主题仓库</h2>
-            <p>首版不要求账号登录。我们会核验仓库归属、许可、主题文件和真实预览，再决定是否公开收录。</p>
+            <p>首版不要求账号登录。提交只会进入私有审核队列；我们核验仓库归属、许可、主题文件和真实预览后，审核通过才会公开。</p>
             {submitState === "success" ? (
               <div className="success-state"><span>✓</span><h3>已保存到审核队列</h3><p>{submitMessage}</p><button onClick={() => { setSubmitOpen(false); setSubmitState("idle"); }}>完成</button></div>
             ) : (
@@ -566,6 +573,7 @@ export default function Home() {
                 <label>GitHub 仓库<input name="repoUrl" type="url" required pattern="https://github\.com/.+/.+" placeholder="https://github.com/owner/repo" /></label>
                 <label>支持平台<select name="platform" defaultValue="桌面端"><option>桌面端</option><option>CLI</option><option>全平台</option></select></label>
                 <label className="notes-field">补充说明<textarea name="notes" maxLength={500} placeholder="主题格式、验证版本或安装方式（可选）" /></label>
+                <label className="review-consent"><input name="publicationConsent" type="checkbox" required /><span>我同意将主题名称、作者名称、仓库链接、平台和补充说明提交审核；只有审核通过后，这些信息才会在官网公开。</span></label>
                 <label className="honeypot" aria-hidden="true">Website<input name="website" tabIndex={-1} autoComplete="off" /></label>
                 {submitState === "error" && <p className="form-error" role="alert">{submitMessage}</p>}
                 <button className="primary-action" type="submit" disabled={submitState === "sending"}>{submitState === "sending" ? "正在保存…" : "提交审核 →"}</button>

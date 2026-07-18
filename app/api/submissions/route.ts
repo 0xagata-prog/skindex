@@ -1,5 +1,6 @@
 import { getDb } from "../../../db";
 import { submissions } from "../../../db/schema";
+import { PENDING_REVIEW_STATUS, pendingReviewResult } from "../../../lib/review-policy";
 import { ensureThemeData } from "../../../lib/theme-seed";
 
 const allowedPlatforms = new Set(["桌面端", "CLI", "全平台"]);
@@ -33,6 +34,7 @@ export async function POST(request: Request) {
       platform?: string;
       notes?: string;
       website?: string;
+      publicationConsent?: boolean;
     };
     if (payload.website) return Response.json({ accepted: true }, { status: 202 });
 
@@ -41,6 +43,10 @@ export async function POST(request: Request) {
     const repoUrl = payload.repoUrl?.trim().replace(/\/$/, "") ?? "";
     const platform = payload.platform?.trim() ?? "";
     const notes = payload.notes?.trim().slice(0, 500) ?? "";
+
+    if (payload.publicationConsent !== true) {
+      return Response.json({ error: "提交前需要确认：仓库信息仅在审核通过后公开" }, { status: 400 });
+    }
 
     if (themeName.length < 2 || themeName.length > 80) {
       return Response.json({ error: "主题名称需为 2–80 个字符" }, { status: 400 });
@@ -57,9 +63,17 @@ export async function POST(request: Request) {
 
     await ensureThemeData();
     const id = crypto.randomUUID();
-    await getDb().insert(submissions).values({ id, themeName, authorName, repoUrl, platform, notes });
+    await getDb().insert(submissions).values({
+      id,
+      themeName,
+      authorName,
+      repoUrl,
+      platform,
+      notes,
+      status: PENDING_REVIEW_STATUS,
+    });
 
-    return Response.json({ submission: { id, status: "pending" } }, { status: 201 });
+    return Response.json({ submission: pendingReviewResult(id) }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "投稿失败";
     if (message.includes("UNIQUE") || message.includes("unique")) {

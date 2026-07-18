@@ -6,6 +6,8 @@ The public GitHub repository is https://github.com/0xagata-prog/codex-theme-hub 
 
 The live v0.2.0 source implements the first “two clicks” product framework. First install: the website opens a prefilled generic Codex task that verifies the official GitHub Release, target directory, and existing version, then waits for confirmation before writing the Skill. Manual GitHub download remains the fallback. Daily theme use: supported theme cards open a theme-specific `$theme-hub` task carrying only `themeId` and the official Manifest URL. The Skill validates, plans, creates a restore point, and stages; the user still confirms the final Codex Appearance import.
 
+The current local source adds the v0.3.0 review-first submission policy and is ready to publish. Repository submissions and generated-theme proposals explicitly enter `pending`, return `public: false` plus `publication: review-required`, and cannot appear in the public catalog until their theme status is `approved`. The repository form requires an explicit publication-review checkbox and returns a short review ID. After creating a local theme, the Skill proactively offers submission once; an interested answer is not upload consent, so it then discloses every field and thumbnail and waits for a second confirmation.
+
 Catalog API responses now expose a shared installability contract with `native`, `partial`, and `adapter-pending` support levels. Native and partial themes use `guided-import`; adapter-pending themes use `view-source` and never display a false install action. Manifest v1 optionally carries `install.experience` and `install.supportLevel`, while validation and adapter checks remain authoritative.
 
 The website no longer recommends Codex App Manager or directly links unsigned Styler installers as one-click actions. `.codexskin` and Styler entries now show adapter-pending compatibility notices and only link to traceable upstream sources. Native `codex-theme-v1` themes still require final confirmation inside Codex.
@@ -24,6 +26,7 @@ app/api/submissions/route.ts
 app/api/theme-proposals/route.ts
 app/downloads/codex-theme-hub-plugin.zip/route.ts
 lib/theme-capability.ts
+lib/review-policy.ts
 lib/image-security.ts
 plugins/codex-theme-hub/skills/theme-hub/SKILL.md
 plugins/codex-theme-hub/skills/theme-hub/references/deep-link-v1.md
@@ -35,11 +38,13 @@ app/downloads/theme-hub-skill.zip/route.ts
 Important decisions:
 “One click” means opening a safe, reviewable Codex task, not silent browser installation or appearance mutation. The initial installer prompt does not invoke `$theme-hub` because the Skill may not exist yet; it names the official GitHub source and targets `~/.agents/skills/theme-hub` or `%USERPROFILE%\.agents\skills\theme-hub`, discloses writes, protects existing installs, and waits for confirmation. Theme deep links invoke `$theme-hub` only after installation and carry a small structured request. Plugin packaging is the future official installable distribution layer and must not appear on the website until listing. No flow patches the Codex app bundle or silently changes appearance.
 
+All user submissions require review before publication. The first post-creation question asks only whether the user is interested in submitting; the second confirmation, after exact disclosure, authorizes upload. Review administration is intentionally not exposed yet because reviewer identity and authentication have not been selected.
+
 Verification:
-Skill Creator validation passes. `npm run test:theme-hub` passes 13 tests, including installability classification, manifest safety, image signatures, restore behavior, and the Skill client marker. `npm test` passes 2 product-entry tests after replacing obsolete starter-skeleton tests. `npm run lint`, `npm run build`, and `git diff --check` pass. GitHub Actions published v0.2.0 successfully; `theme-hub-skill.zip` passed `unzip -t` and has SHA-256 `ffbe9d756543b1a83fc5d9dfa76fb19655e2ee08560bc49ab6c081042747dc07`. Production smoke tests returned HTTP 200, found the guided-install copy, read all 14 themes with support counts native 7 / partial 1 / adapter-pending 6, verified a native guided-import manifest, confirmed the legacy Skill URL redirects to GitHub, and confirmed the retired plugin URL returns 410.
+The v0.3.0 source passes Skill Creator validation, `npm run test:theme-hub` (13 tests), `npm test` (build plus 3 product-policy tests), `npm run lint`, and `git diff --check`. The previous v0.2.0 Release archive and Sites version 10 passed production verification.
 
 What to do next:
-Test both guided Skill installation and a native theme switch in a fresh Codex task. Before broad promotion, add managed rate limiting and reviewer tooling, then build the missing `.codexskin` and Styler adapters. When Plugin Directory listing is available, package the Skill as the official installable plugin while keeping GitHub releases as the auditable source.
+Validate and publish v0.3.0, deploy the updated site, and smoke-test the review-required API responses. Then decide who is allowed to review (owner-only, named team, or workspace) before building reviewer tooling. Before broad promotion, add managed rate limiting and build the missing `.codexskin` and Styler adapters.
 
 Known risks:
 The guided installer is a prefilled Codex task, not an official install protocol; it still depends on Codex network/filesystem approvals and a new chat after installation. There is no documented direct Codex appearance-import deep link, so supported native imports still require user confirmation. The Skill client marker is a public identifier, not authentication, and there is still no robust server-side rate limit. Third-party preview URLs create hotlink/privacy risk. Fan-created IP requires rights review. `.codexskin` and Styler adapters remain unavailable.

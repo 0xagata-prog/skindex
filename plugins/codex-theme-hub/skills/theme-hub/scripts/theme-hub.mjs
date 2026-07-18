@@ -192,7 +192,7 @@ export function validateManifest(manifest) {
     errors.push("updatedAt must be an ISO date-time");
   }
   if (expectedAdapter && !AVAILABLE_ADAPTERS.has(expectedAdapter)) {
-    warnings.push(`${expectedAdapter} is recognized but unavailable in Theme Hub Skill v0.2.0`);
+    warnings.push(`${expectedAdapter} is recognized but unavailable in Theme Hub Skill v0.3.0`);
   }
 
   return { ok: errors.length === 0, errors, warnings };
@@ -262,7 +262,7 @@ async function writeJsonAtomic(filePath, value) {
 
 export async function stageManifest(manifest, { stateRoot = stateRootFromEnvironment(), now = () => new Date() } = {}) {
   const plan = planManifest(manifest, { stateRoot });
-  if (plan.status !== "ready") throw new Error(`${plan.adapter} is not available in Theme Hub Skill v0.2.0`);
+  if (plan.status !== "ready") throw new Error(`${plan.adapter} is not available in Theme Hub Skill v0.3.0`);
 
   const manifestText = `${JSON.stringify(manifest, null, 2)}\n`;
   const revision = sha256(manifestText);
@@ -552,7 +552,11 @@ export async function submitThemeProposal({
     headers: { "X-Theme-Hub-Client": "theme-hub-skill-v1" },
     body: form,
   }));
-  return { status: "submitted-for-review", ...data.proposal };
+  return {
+    ...data.proposal,
+    public: false,
+    publication: "review-required",
+  };
 }
 
 function parseCli(argv) {

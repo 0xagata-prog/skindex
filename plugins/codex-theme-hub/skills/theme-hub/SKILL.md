@@ -52,12 +52,13 @@ node scripts/theme-hub.mjs create --id <kebab-id> --name <name> --author <author
 ```
 
 5. Validate, stage, and import it using the same install workflow. Keep the generated preview beside the user's local work; creating a theme never uploads it automatically.
+6. After the local theme is complete, offer once: “这个主题已经保存在本地，要不要投稿到 Theme Hub 官网？” If the user says no or does not answer, stop the submission flow and keep everything local. If the user says yes, continue to the separate disclosure and confirmation below; this first yes is interest, not upload consent.
 
 Be explicit when the generated preview contains layout, character, animation, or pet concepts that the current native color adapter cannot install.
 
 ## Submit a generated theme to Theme Hub
 
-Before uploading anything, show the user exactly what will be sent: theme name, author label, palette, notes, and the review thumbnail (maximum 700 KB). Ask: “要把这些内容上传到 Theme Hub 审核队列吗？”
+Before uploading anything, show the user exactly what will be sent: theme name, author label, palette, notes, and the review thumbnail (maximum 700 KB). State that the queue is private, the submission is not public, and only an approved theme can enter the website catalog. Then ask: “确认把以上内容上传到 Theme Hub 审核队列吗？”
 
 Only after an unambiguous yes, run:
 
@@ -65,7 +66,7 @@ Only after an unambiguous yes, run:
 node scripts/theme-hub.mjs submit --name <name> --author <author> --platform <桌面端|CLI|全平台> --palette <#RRGGBB,#RRGGBB,#RRGGBB> --preview <image-path> --consent yes
 ```
 
-Submission uploads the preview and metadata to a private pending-review queue. It does not publish the theme. Never infer consent from the earlier request to generate or install a theme. If the image is private, sensitive, contains unlicensed material, or the user declines, keep it local.
+Submission uploads the preview and metadata to a private pending-review queue. It does not publish the theme. Report the returned review ID and `pending` status, and say “审核通过前不会出现在官网”。 Never infer consent from the earlier request to generate or install a theme, or from the user's initial interest in submitting it. If the image is private, sensitive, contains unlicensed material, or the user declines, keep it local.
 
 ## Restore
 

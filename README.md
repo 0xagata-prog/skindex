@@ -10,12 +10,13 @@ GitHub 源码：<https://github.com/0xagata-prog/codex-theme-hub>
 
 ## 当前能力
 
-- D1 真实主题目录、GitHub 投稿队列与 Skill 生成主题审核队列。
+- D1 真实主题目录、GitHub 投稿队列与 Skill 生成主题审核队列；所有新投稿固定为 `pending`，只有 `approved` 主题进入公开目录。
 - R2 保存用户明确同意上传的生成主题预览；未确认内容只留在本地。
 - 统一的 `Theme Manifest v1` 数据契约。
 - GitHub 是 Skill 源码和版本的唯一发布源；官网安装按钮指向最新 GitHub Release。
 - `codex-theme-v1` 的校验、托管暂存、恢复点与剪贴板适配器。
 - 官网目录查询、逐主题 Manifest API、参考图生成流程与经确认提交审核。
+- Skill 完成本地主题后会主动询问一次是否愿意投稿；表示愿意不等于授权上传，展示公开字段并再次确认后才提交。
 - 官网到 Codex 的 `$theme-hub` 对话深链；链接只预填对话，不会绕过用户确认。
 
 产品框架见 [docs/theme-hub-framework.md](docs/theme-hub-framework.md)。Skill 源码位于 [plugins/codex-theme-hub/skills/theme-hub](plugins/codex-theme-hub/skills/theme-hub)。

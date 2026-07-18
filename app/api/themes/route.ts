@@ -3,6 +3,7 @@ import { getDb } from "../../../db";
 import { themes } from "../../../db/schema";
 import { buildThemeManifest } from "../../../lib/theme-manifest";
 import { getThemeInstallability } from "../../../lib/theme-capability";
+import { APPROVED_THEME_STATUS, isPublicThemeStatus } from "../../../lib/review-policy";
 import { ensureThemeData } from "../../../lib/theme-seed";
 
 function parseList(value: string): string[] {
@@ -26,7 +27,7 @@ export async function GET(request: Request) {
         .from(themes)
         .where(eq(themes.id, requestedId))
         .limit(1);
-      if (!theme || theme.status !== "approved") return Response.json({ error: "主题不存在" }, { status: 404 });
+      if (!theme || !isPublicThemeStatus(theme.status)) return Response.json({ error: "主题不存在" }, { status: 404 });
       if (!theme.verifiedVersion.includes("codex-theme-v1")) {
         return Response.json({ error: "这个主题暂不支持原生 Skill 导入" }, { status: 409 });
       }
@@ -40,7 +41,7 @@ export async function GET(request: Request) {
     const rows = await getDb()
       .select()
       .from(themes)
-      .where(eq(themes.status, "approved"))
+      .where(eq(themes.status, APPROVED_THEME_STATUS))
       .orderBy(desc(themes.featured), desc(themes.updatedAt), desc(themes.name));
 
     const result = rows.map((theme) => ({

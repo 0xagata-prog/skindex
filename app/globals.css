@@ -231,7 +231,9 @@ footer a:hover { color: var(--purple); }
 .submit-modal form input, .submit-modal form select, .submit-modal form textarea { width: 100%; margin-top: 7px; border: 1px solid #d8d9e3; border-radius: 10px; background: white; padding: 0 12px; color: var(--ink); font-size: 12px; }
 .submit-modal form input, .submit-modal form select { height: 43px; }
 .submit-modal form textarea { min-height: 92px; resize: vertical; padding-block: 11px; line-height: 1.5; }
-.submit-modal form label:nth-child(3), .submit-modal form .notes-field, .submit-modal form button, .form-error { grid-column: 1 / -1; }
+.submit-modal form label:nth-child(3), .submit-modal form .notes-field, .submit-modal form .review-consent, .submit-modal form button, .form-error { grid-column: 1 / -1; }
+.submit-modal form .review-consent { display: grid; grid-template-columns: 18px 1fr; gap: 10px; align-items: start; border: 1px solid #d8d9e3; border-radius: 10px; padding: 12px; background: #f8f8fb; font-weight: 500; line-height: 1.55; }
+.submit-modal form .review-consent input { width: 16px; height: 16px; margin: 1px 0 0; accent-color: var(--purple); }
 .submit-modal form button:disabled { cursor: wait; opacity: .65; }
 .honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
 .form-error { margin: 0; border-radius: 10px; padding: 10px 12px; color: #a43620; background: #fff0ec; font-size: 11px; }

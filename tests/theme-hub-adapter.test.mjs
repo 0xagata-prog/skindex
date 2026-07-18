@@ -176,4 +176,6 @@ test("marks consented proposal requests as Theme Hub Skill traffic", async () =>
   });
   assert.equal(clientHeader, "theme-hub-skill-v1");
   assert.equal(result.status, "pending");
+  assert.equal(result.public, false);
+  assert.equal(result.publication, "review-required");
 });

@@ -2,6 +2,7 @@ import { getDb } from "../../../db";
 import { themeProposals } from "../../../db/schema";
 import { ensureThemeData } from "../../../lib/theme-seed";
 import { matchesImageSignature } from "../../../lib/image-security";
+import { PENDING_REVIEW_STATUS, pendingReviewResult } from "../../../lib/review-policy";
 import { getThemeAssets } from "../../../storage";
 
 const allowedPlatforms = new Set(["桌面端", "CLI", "全平台"]);
@@ -99,9 +100,10 @@ export async function POST(request: Request) {
       previewMime: preview.type,
       sourceType,
       consentAt,
+      status: PENDING_REVIEW_STATUS,
     });
 
-    return Response.json({ proposal: { id, status: "pending", consentAt } }, { status: 201 });
+    return Response.json({ proposal: pendingReviewResult(id, consentAt) }, { status: 201 });
   } catch {
     if (uploadedKey) await getThemeAssets().delete(uploadedKey).catch(() => undefined);
     return Response.json({ error: "主题暂时无法提交，请稍后重试" }, { status: 500 });

@@ -38,3 +38,27 @@ test("routes theme actions through declared support levels", async () => {
   assert.match(page, /适配器开发中/);
   assert.match(skill, /`verified`, `staged`, `awaiting-confirmation`, or `confirmed`/);
 });
+
+test("keeps every submission private until review approval", async () => {
+  const [page, submissionsRoute, proposalsRoute, themesRoute, policy, skill, script] = await Promise.all([
+    source("../app/page.tsx"),
+    source("../app/api/submissions/route.ts"),
+    source("../app/api/theme-proposals/route.ts"),
+    source("../app/api/themes/route.ts"),
+    source("../lib/review-policy.ts"),
+    source("../plugins/codex-theme-hub/skills/theme-hub/SKILL.md"),
+    source("../plugins/codex-theme-hub/skills/theme-hub/scripts/theme-hub.mjs"),
+  ]);
+
+  assert.match(page, /publicationConsent/);
+  assert.match(page, /审核通过前不会出现在官网/);
+  assert.match(submissionsRoute, /status: PENDING_REVIEW_STATUS/);
+  assert.match(proposalsRoute, /status: PENDING_REVIEW_STATUS/);
+  assert.match(policy, /public: false/);
+  assert.match(policy, /status === APPROVED_THEME_STATUS/);
+  assert.match(themesRoute, /isPublicThemeStatus\(theme\.status\)/);
+  assert.match(themesRoute, /eq\(themes\.status, APPROVED_THEME_STATUS\)/);
+  assert.match(skill, /这个主题已经保存在本地，要不要投稿到 Theme Hub 官网/);
+  assert.match(skill, /this first yes is interest, not upload consent/);
+  assert.match(script, /publication: "review-required"/);
+});
