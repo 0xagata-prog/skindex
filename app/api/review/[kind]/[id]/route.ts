@@ -4,6 +4,7 @@ import { submissions, themeProposals } from "../../../../../db/schema";
 import { getAuthorizedReviewer } from "../../../../../lib/reviewer-auth";
 import { APPROVED_THEME_STATUS, PENDING_REVIEW_STATUS } from "../../../../../lib/review-policy";
 import { getThemeAssets } from "../../../../../storage";
+import { normalizeCatalogDescription, normalizeCatalogTags, validateThemeIdentity } from "../../../../../lib/theme-standard";
 
 const CANONICAL_ORIGIN = "https://codex-skindex.vercel.app";
 
@@ -72,10 +73,12 @@ export async function POST(request: Request, context: RouteContext) {
 
   const palette = parsePalette(proposal.palette);
   if (palette.length < 3) return Response.json({ error: "主题色板无效，不能发布" }, { status: 409 });
+  const identityError = validateThemeIdentity(proposal.themeName, proposal.authorName);
+  if (identityError) return Response.json({ error: identityError }, { status: 409 });
   const themeId = `community-${proposal.id}`;
   const now = new Date().toISOString();
-  const tags = JSON.stringify([proposal.sourceType === "reference-image" ? "参考图生成" : "用户生成", "社区投稿", "原生导入"]);
-  const description = proposal.notes || "由 SkinDex 用户生成并经所有者审核通过的社区主题。";
+  const tags = JSON.stringify(normalizeCatalogTags([proposal.sourceType === "reference-image" ? "参考图生成" : "用户生成", "社区投稿", "原生导入"]));
+  const description = normalizeCatalogDescription(proposal.notes || "由 SkinDex 用户生成并经所有者审核通过的社区主题。");
 
   await getD1().batch([
     getD1().prepare(`INSERT INTO themes (

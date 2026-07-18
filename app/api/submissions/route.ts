@@ -4,6 +4,7 @@ import { PENDING_REVIEW_STATUS, pendingReviewResult } from "../../../lib/review-
 import { ensureThemeData } from "../../../lib/theme-seed";
 import { isTrustedBrowserOrigin } from "../../../lib/trusted-origin";
 import { capacityResponse, submissionCapacity } from "../../../lib/submission-guard";
+import { validateThemeIdentity } from "../../../lib/theme-standard";
 
 const allowedPlatforms = new Set(["桌面端", "CLI", "全平台"]);
 
@@ -53,12 +54,8 @@ export async function POST(request: Request) {
       return Response.json({ error: "提交前需要确认：仓库信息仅在审核通过后公开" }, { status: 400 });
     }
 
-    if (themeName.length < 2 || themeName.length > 80) {
-      return Response.json({ error: "主题名称需为 2–80 个字符" }, { status: 400 });
-    }
-    if (authorName.length < 2 || authorName.length > 60) {
-      return Response.json({ error: "作者名称需为 2–60 个字符" }, { status: 400 });
-    }
+    const identityError = validateThemeIdentity(themeName, authorName);
+    if (identityError) return Response.json({ error: identityError }, { status: 400 });
     if (!isGitHubRepoUrl(repoUrl)) {
       return Response.json({ error: "请填写有效的 GitHub 仓库链接" }, { status: 400 });
     }

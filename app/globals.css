@@ -174,6 +174,14 @@ main { min-height: 100vh; overflow: hidden; }
 .use-now-button span { color: var(--lime); font-size: 15px; }
 .card-footer { padding-top: 13px; border-top: 1px solid #ececf2; display: flex; gap: 12px; align-items: center; color: #777a89; font: 500 9px/1 var(--font-geist-mono); }
 .card-footer .source-label { margin-left: auto; }
+.catalog-pagination { min-height: 54px; margin-top: 34px; display: flex; align-items: center; justify-content: center; gap: 12px; }
+.catalog-pagination button { min-width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 10px; color: #626574; background: white; cursor: pointer; font: 600 11px/1 var(--font-geist-mono); }
+.catalog-pagination button:hover:not(:disabled), .catalog-pagination button.active { border-color: var(--purple); color: white; background: var(--purple); }
+.catalog-pagination button:disabled { cursor: not-allowed; opacity: .38; }
+.catalog-pagination .page-direction { min-width: 92px; padding: 0 14px; }
+.page-numbers { display: flex; align-items: center; gap: 7px; }
+.page-numbers span { width: 24px; text-align: center; color: #9294a0; }
+.page-summary { display: none; color: #707382; font: 600 10px/1 var(--font-geist-mono); }
 .empty-state { padding: 80px 20px; text-align: center; border: 1px dashed #cfd1de; border-radius: 20px; }
 .empty-state > span { font-size: 42px; color: var(--purple); }
 .empty-state h3 { margin: 10px 0 6px; font-size: 25px; }
@@ -238,6 +246,9 @@ footer a:hover { color: var(--purple); }
 .submit-modal form input, .submit-modal form select, .submit-modal form textarea { width: 100%; margin-top: 7px; border: 1px solid #d8d9e3; border-radius: 10px; background: white; padding: 0 12px; color: var(--ink); font-size: 12px; }
 .submit-modal form input, .submit-modal form select { height: 43px; }
 .submit-modal form textarea { min-height: 92px; resize: vertical; padding-block: 11px; line-height: 1.5; }
+.submission-standard { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 7px; border: 1px solid #deddff; border-radius: 12px; padding: 13px; background: #f5f4ff; }
+.submission-standard b { width: 100%; margin-bottom: 2px; color: var(--purple-dark); font-size: 11px; }
+.submission-standard span { display: inline-flex; align-items: center; min-height: 25px; border: 1px solid #dedff0; border-radius: 999px; padding: 0 9px; color: #656877; background: white; font-size: 9px; }
 .submit-modal form label:nth-child(3), .submit-modal form .notes-field, .submit-modal form .review-consent, .submit-modal form button, .form-error { grid-column: 1 / -1; }
 .submit-modal form .review-consent { display: grid; grid-template-columns: 18px 1fr; gap: 10px; align-items: start; border: 1px solid #d8d9e3; border-radius: 10px; padding: 12px; background: #f8f8fb; font-weight: 500; line-height: 1.55; }
 .submit-modal form .review-consent input { width: 16px; height: 16px; margin: 1px 0 0; accent-color: var(--purple); }
@@ -317,6 +328,10 @@ button.install-primary { width: 100%; margin-top: 10px; border: 0; color: white;
   .filter-tabs { gap: 3px; }
   .filter-tabs button { padding: 8px 10px; font-size: 11px; }
   .theme-grid { grid-template-columns: 1fr; }
+  .catalog-pagination { justify-content: space-between; gap: 8px; }
+  .catalog-pagination .page-numbers { display: none; }
+  .catalog-pagination .page-summary { display: inline-flex; }
+  .catalog-pagination .page-direction { min-width: 88px; padding: 0 10px; }
   .sources-section { padding: 68px 16px 12px; }
   .source-grid { grid-template-columns: 1fr; }
   .sync-note { text-align: left; }
