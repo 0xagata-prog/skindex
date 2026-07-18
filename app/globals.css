@@ -136,6 +136,9 @@ main { min-height: 100vh; overflow: hidden; }
 .source-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tag-row { display: flex; gap: 5px; flex-wrap: wrap; margin: 14px 0 16px; }
 .tag-row span { border: 1px solid #e0e1e9; color: #727583; border-radius: 999px; padding: 5px 7px; font-size: 9px; }
+.use-now-button { width: 100%; display: flex; align-items: center; justify-content: space-between; margin: 0 0 14px; border: 0; border-radius: 11px; padding: 11px 13px; color: white; background: var(--ink); cursor: pointer; font-size: 11px; font-weight: 680; transition: background .2s ease, transform .2s ease; }
+.use-now-button:hover { background: var(--purple); transform: translateY(-1px); }
+.use-now-button span { color: var(--lime); font-size: 15px; }
 .card-footer { padding-top: 13px; border-top: 1px solid #ececf2; display: flex; gap: 12px; align-items: center; color: #777a89; font: 500 9px/1 var(--font-geist-mono); }
 .card-footer .compatibility { margin-left: auto; color: #3c9865; }
 .empty-state { padding: 80px 20px; text-align: center; border: 1px dashed #cfd1de; border-radius: 20px; }
@@ -172,7 +175,7 @@ footer > div { justify-self: end; display: flex; gap: 20px; }
 footer a:hover { color: var(--purple); }
 
 .modal-backdrop { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 24px; background: rgba(15, 16, 29, .72); backdrop-filter: blur(8px); }
-.detail-modal, .submit-modal { width: min(920px, 100%); max-height: calc(100vh - 48px); overflow: auto; position: relative; border-radius: 24px; background: white; box-shadow: 0 28px 100px rgba(0,0,0,.35); }
+.detail-modal, .submit-modal, .install-modal { width: min(920px, 100%); max-height: calc(100vh - 48px); overflow: auto; position: relative; border-radius: 24px; background: white; box-shadow: 0 28px 100px rgba(0,0,0,.35); }
 .detail-modal { display: grid; grid-template-columns: 1.08fr .92fr; }
 .detail-modal > .theme-preview, .detail-modal > .real-theme-preview { height: 100%; min-height: 540px; border-radius: 24px 0 0 24px; }
 .detail-modal .mini-shell { grid-template-columns: 23% 77%; }
@@ -210,6 +213,22 @@ footer a:hover { color: var(--purple); }
 .success-state h3 { margin: 18px 0 8px; }
 .success-state p { color: var(--muted); }
 .success-state button { margin-top: 18px; padding-inline: 30px; background: var(--purple); color: white; }
+
+.install-modal { max-width: 660px; padding: 46px; }
+.install-modal h2 { margin: 16px 0 12px; font-size: 36px; letter-spacing: -.05em; }
+.install-modal > p { color: var(--muted); font-size: 13px; line-height: 1.65; }
+.install-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 26px 0; padding: 0; list-style: none; }
+.install-steps li { min-height: 108px; padding: 15px; border: 1px solid var(--line); border-radius: 13px; background: #f8f8fb; }
+.install-steps span { color: var(--purple); font: 650 9px/1 var(--font-geist-mono); }
+.install-steps p { margin: 18px 0 0; font-size: 11px; line-height: 1.55; }
+.theme-code { width: 100%; min-height: 116px; resize: vertical; border: 1px solid #343747; border-radius: 12px; padding: 14px; color: #e6e7ee; background: var(--ink); font: 500 10px/1.55 var(--font-geist-mono); }
+.install-primary, .install-secondary { min-height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 12px; padding: 12px 16px; cursor: pointer; text-align: center; font-size: 12px; font-weight: 680; }
+button.install-primary { width: 100%; margin-top: 10px; border: 0; color: white; background: var(--purple); }
+.install-links { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.install-links .install-primary { color: white; background: var(--purple); }
+.install-secondary { border: 1px solid var(--line); background: white; }
+.install-error { margin: 9px 0 0 !important; color: #a43620 !important; }
+.install-source { margin: 16px 0 0; text-align: center; font-size: 10px !important; }
 
 @media (max-width: 1100px) {
   .hero { grid-template-columns: 1fr 1fr; gap: 30px; }
@@ -251,6 +270,9 @@ footer a:hover { color: var(--purple); }
   .submit-modal { padding: 38px 22px 24px; }
   .submit-modal form { grid-template-columns: 1fr; }
   .submit-modal form label:nth-child(3), .submit-modal form button { grid-column: 1; }
+  .install-modal { padding: 40px 22px 24px; }
+  .install-steps, .install-links { grid-template-columns: 1fr; }
+  .install-steps li { min-height: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

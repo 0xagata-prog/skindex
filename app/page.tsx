@@ -32,7 +32,105 @@ type CatalogResponse = {
   syncedAt: string;
 };
 
+type InstallGuide = {
+  kind: "copy" | "skin" | "styler";
+  buttonLabel: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+  steps: string[];
+  copyValue?: string;
+  primaryUrl?: string;
+  primaryLabel?: string;
+  secondaryUrl?: string;
+  secondaryLabel?: string;
+};
+
 const filters = ["全部", "桌面端", "CLI", "深色", "浅色", "双模式"] as const;
+
+const materialSemanticColors: Record<string, { diffAdded: string; diffRemoved: string; skill: string }> = {
+  "chalkboard-green": { diffAdded: "#9EBB84", diffRemoved: "#D9907E", skill: "#C3A7D8" },
+  "cafe-walnut": { diffAdded: "#9EBB84", diffRemoved: "#D9907E", skill: "#C3A7D8" },
+  "parchment-and-ink": { diffAdded: "#477A4A", diffRemoved: "#D9907E", skill: "#C3A7D8" },
+  "drafting-blue": { diffAdded: "#9EBB84", diffRemoved: "#D9907E", skill: "#C3A7D8" },
+  "harbor-fog": { diffAdded: "#397253", diffRemoved: "#A34C4C", skill: "#76558E" },
+  "amber-terminal": { diffAdded: "#A6C77B", diffRemoved: "#E08A72", skill: "#C7A5D9" },
+  "indigo-workwear": { diffAdded: "#86A98B", diffRemoved: "#D18478", skill: "#A696BB" },
+};
+
+const materialContrast: Record<string, number> = {
+  "chalkboard-green": 68,
+  "cafe-walnut": 70,
+  "parchment-and-ink": 72,
+  "drafting-blue": 70,
+  "harbor-fog": 71,
+  "amber-terminal": 78,
+  "indigo-workwear": 72,
+};
+
+const skinDownloads: Record<string, string> = {
+  "fortune-pavilion": "caishen-jubao-1.0.1.codexskin",
+  "celestial-court": "celestial-court-1.0.1.codexskin",
+  "ming-imperial": "ming-imperial-1.0.1.codexskin",
+  "underworld-tribunal": "underworld-yama-1.0.1.codexskin",
+};
+
+function getInstallGuide(theme: Theme): InstallGuide {
+  if (theme.sourceRepo === "robinli/codex-material-themes") {
+    const [surface, ink, accent] = theme.palette;
+    const copyValue = `codex-theme-v1:${JSON.stringify({
+      codeThemeId: "codex",
+      theme: {
+        accent,
+        contrast: materialContrast[theme.id],
+        fonts: { code: "Cascadia Mono", ui: "Noto Sans TC" },
+        ink,
+        opaqueWindows: true,
+        semanticColors: materialSemanticColors[theme.id],
+        surface,
+      },
+      variant: "dark",
+    })}`;
+    return {
+      kind: "copy",
+      buttonLabel: "复制并导入",
+      eyebrow: "CODEX NATIVE THEME",
+      title: `导入 ${theme.name}`,
+      description: "这是 Codex 原生主题配置。网站可以帮你复制完整设置，但浏览器不能越过系统安全限制直接修改 Codex。",
+      steps: ["点击下方按钮复制完整主题设置", "打开 Codex → 设置 → 外观 → 导入", "粘贴设置并选择“导入主题”"],
+      copyValue,
+    };
+  }
+
+  if (theme.sourceRepo === "Wangnov/awesome-codex-skins") {
+    const filename = skinDownloads[theme.id];
+    return {
+      kind: "skin",
+      buttonLabel: "下载皮肤",
+      eyebrow: ".CODEXSKIN PACKAGE",
+      title: `安装 ${theme.name}`,
+      description: "这是经过仓库质量门验证的 .codexskin 包。下载后由 Codex App Manager 完成试穿、应用和还原。",
+      steps: ["下载下方 .codexskin 文件", "打开 Codex App Manager 的主题页面", "把文件拖入页面，选择“试穿”或“应用”"],
+      primaryUrl: `https://github.com/Wangnov/awesome-codex-skins/releases/download/skins-v1.1.0/${filename}`,
+      primaryLabel: "下载 .codexskin ↓",
+      secondaryUrl: "https://github.com/Wangnov/Codex-App-Manager",
+      secondaryLabel: "获取 Codex App Manager ↗",
+    };
+  }
+
+  return {
+    kind: "styler",
+    buttonLabel: "安装后使用",
+    eyebrow: "CODEX STYLER BETA",
+    title: `使用 ${theme.name}`,
+    description: "这类场景主题由 Codex Styler 管理。选择系统安装包，安装后即可在 Styler 中切换主题并随时还原。",
+    steps: ["下载与你电脑匹配的安装包", "安装并首次打开 Codex Styler", "在主题场景中选择并应用此主题"],
+    primaryUrl: "https://github.com/xuhuanstudio/codex-styler/releases/download/v0.2.0-beta.2/Codex-Styler_0.2.0-beta.2_aarch64-unsigned.dmg",
+    primaryLabel: "下载 macOS Apple 芯片版 ↓",
+    secondaryUrl: "https://github.com/xuhuanstudio/codex-styler/releases/download/v0.2.0-beta.2/Codex-Styler_0.2.0-beta.2_x64-unsigned-setup.exe",
+    secondaryLabel: "下载 Windows x64 版 ↓",
+  };
+}
 
 function ThemePreview({ theme, large = false }: { theme: Theme; large?: boolean }) {
   return (
@@ -48,12 +146,15 @@ function ThemeCard({
   saved,
   onSave,
   onOpen,
+  onUse,
 }: {
   theme: Theme;
   saved: boolean;
   onSave: () => void;
   onOpen: () => void;
+  onUse: () => void;
 }) {
+  const installGuide = getInstallGuide(theme);
   return (
     <article className="theme-card real-card">
       <button className="preview-button" onClick={onOpen} aria-label={`查看 ${theme.name} 详情`}>
@@ -88,6 +189,7 @@ function ThemeCard({
         <div className="tag-row">
           {theme.tags.map((tag) => <span key={tag}>{tag}</span>)}
         </div>
+        <button className="use-now-button" onClick={onUse}>{installGuide.buttonLabel}<span>→</span></button>
         <div className="card-footer">
           <span>★ {theme.stars}</span>
           <span className="source-label">{theme.sourceName}</span>
@@ -108,6 +210,8 @@ export default function Home() {
   const [filter, setFilter] = useState<(typeof filters)[number]>("全部");
   const [saved, setSaved] = useState<string[]>([]);
   const [selected, setSelected] = useState<Theme | null>(null);
+  const [installTheme, setInstallTheme] = useState<Theme | null>(null);
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
   const [submitOpen, setSubmitOpen] = useState(false);
   const [submitState, setSubmitState] = useState<"idle" | "sending" | "success" | "error">("idle");
   const [submitMessage, setSubmitMessage] = useState("");
@@ -167,6 +271,21 @@ export default function Home() {
       window.localStorage.setItem("codex-theme-hub-saved", JSON.stringify(next));
       return next;
     });
+  };
+
+  const openInstall = (theme: Theme) => {
+    setSelected(null);
+    setInstallTheme(theme);
+    setCopyState("idle");
+  };
+
+  const copyThemeSetting = async (value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopyState("copied");
+    } catch {
+      setCopyState("error");
+    }
   };
 
   const submitTheme = async (event: FormEvent<HTMLFormElement>) => {
@@ -259,7 +378,7 @@ export default function Home() {
           <div className="empty-state"><span>!</span><h3>目录暂时不可用</h3><p>{loadError}</p><button onClick={() => window.location.reload()}>重新加载</button></div>
         ) : visibleThemes.length > 0 ? (
           <div className="theme-grid">
-            {visibleThemes.map((theme) => <ThemeCard key={theme.id} theme={theme} saved={saved.includes(theme.id)} onSave={() => toggleSaved(theme.id)} onOpen={() => setSelected(theme)} />)}
+            {visibleThemes.map((theme) => <ThemeCard key={theme.id} theme={theme} saved={saved.includes(theme.id)} onSave={() => toggleSaved(theme.id)} onOpen={() => setSelected(theme)} onUse={() => openInstall(theme)} />)}
           </div>
         ) : (
           <div className="empty-state"><span>⌕</span><h3>没有找到对应主题</h3><p>换个关键词，或清除当前筛选条件。</p><button onClick={() => { setQuery(""); setFilter("全部"); }}>查看全部主题</button></div>
@@ -308,13 +427,45 @@ export default function Home() {
                 <span><b>{selected.verifiedVersion}</b> 验证信息</span>
               </div>
               <div className="detail-actions">
-                <button className="primary-action" onClick={() => toggleSaved(selected.id)}>{saved.includes(selected.id) ? "已收藏 ♥" : "收藏到本机 ♡"}</button>
-                <a className="detail-link-button" href={selected.downloadUrl} target="_blank" rel="noreferrer">前往原作者页面 ↗</a>
+                <button className="primary-action" onClick={() => openInstall(selected)}>立即使用 →</button>
+                <a className="detail-link-button" href={selected.sourceUrl} target="_blank" rel="noreferrer">查看源仓库 ↗</a>
               </div>
             </div>
           </section>
         </div>
       )}
+
+      {installTheme && (() => {
+        const guide = getInstallGuide(installTheme);
+        return (
+          <div className="modal-backdrop" role="presentation" onMouseDown={() => setInstallTheme(null)}>
+            <section className="install-modal" role="dialog" aria-modal="true" aria-labelledby="install-title" onMouseDown={(event) => event.stopPropagation()}>
+              <button className="modal-close" onClick={() => setInstallTheme(null)} aria-label="关闭安装说明">×</button>
+              <span className="section-index">{guide.eyebrow}</span>
+              <h2 id="install-title">{guide.title}</h2>
+              <p>{guide.description}</p>
+              <ol className="install-steps">
+                {guide.steps.map((step, index) => <li key={step}><span>0{index + 1}</span><p>{step}</p></li>)}
+              </ol>
+              {guide.kind === "copy" && guide.copyValue ? (
+                <>
+                  <textarea className="theme-code" readOnly value={guide.copyValue} aria-label="完整主题设置" />
+                  <button className="install-primary" onClick={() => copyThemeSetting(guide.copyValue!)}>
+                    {copyState === "copied" ? "已复制，去 Codex 导入 ✓" : "复制完整主题设置"}
+                  </button>
+                  {copyState === "error" && <p className="install-error">浏览器未允许复制，请手动选择上方完整设置。</p>}
+                </>
+              ) : (
+                <div className="install-links">
+                  <a className="install-primary" href={guide.primaryUrl} target="_blank" rel="noreferrer">{guide.primaryLabel}</a>
+                  <a className="install-secondary" href={guide.secondaryUrl} target="_blank" rel="noreferrer">{guide.secondaryLabel}</a>
+                </div>
+              )}
+              <p className="install-source">文件和安装器均直接来自原作者 GitHub Release，本站不重新打包。</p>
+            </section>
+          </div>
+        );
+      })()}
 
       {submitOpen && (
         <div className="modal-backdrop" role="presentation" onMouseDown={() => { setSubmitOpen(false); setSubmitState("idle"); }}>
