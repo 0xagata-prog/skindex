@@ -42,10 +42,13 @@ test("routes theme actions through declared support levels", async () => {
   assert.match(capability, /"native" \| "partial" \| "adapter-pending"/);
   assert.match(capability, /action: "guided-import"/);
   assert.match(capability, /action: "view-source"/);
-  assert.match(page, /requestThemeUse\(theme\)/);
+  assert.match(page, /requestThemeUse\(selected\)/);
+  assert.match(page, /openInstall\(selected\)/);
+  assert.match(page, /打开主题/);
   assert.doesNotMatch(page, /href=\{themeUseChatUrl\(theme\)\}/);
   assert.match(page, /skindex_request=/);
-  assert.match(page, /适配器开发中/);
+  assert.match(page, /暂不支持导入/);
+  assert.doesNotMatch(page, /查看兼容状态/);
   assert.match(skill, /`verified`, `staged`, `awaiting-confirmation`, or `confirmed`/);
 });
 

@@ -101,8 +101,8 @@ function getInstallGuide(theme: Theme): InstallGuide {
     const copyValue = buildNativeThemePayload(theme);
     return {
       kind: "copy",
-      buttonLabel: isLabConcept ? "在 Codex 中应用配色" : "在 Codex 中使用",
-      eyebrow: isLabConcept ? "REFERENCE-TO-THEME LAB" : "CODEX NATIVE THEME",
+      buttonLabel: "用 SkinDex 应用",
+      eyebrow: isLabConcept ? "可应用配色" : "可直接应用",
       title: `安全应用 ${theme.name}`,
       description: isLabConcept
         ? "这是从用户参考图提炼的原创概念主题。当前导入会应用冰蓝配色；复古三栏布局和机器人伙伴属于后续皮肤运行时，不会随原生配色一起安装。"
@@ -110,7 +110,7 @@ function getInstallGuide(theme: Theme): InstallGuide {
       steps: ["打开带主题 ID 的 Codex 任务", "Skill 验证 Manifest 并创建恢复点", "在 Codex 外观设置中确认最终导入"],
       copyValue,
       canUseInCodex: true,
-      statusLabel: isLabConcept ? "仅配色可安全导入" : "可安全导入",
+      statusLabel: isLabConcept ? "可应用配色" : "可直接应用",
       supportLevel: install.supportLevel,
     };
   }
@@ -118,8 +118,8 @@ function getInstallGuide(theme: Theme): InstallGuide {
   if (theme.sourceRepo === "Wangnov/awesome-codex-skins") {
     return {
       kind: "skin",
-      buttonLabel: "查看兼容状态",
-      eyebrow: ".CODEXSKIN · ADAPTER PENDING",
+      buttonLabel: "查看主题详情",
+      eyebrow: "第三方主题来源",
       title: `${theme.name} 暂未开放一键导入`,
       description: "SkinDex 已识别这个 .codexskin 来源，但当前 Skill 还没有经过验证、可回滚的运行时适配器，因此不会替你执行第三方安装器或修改 Codex。",
       steps: ["先查看原仓库的格式与许可说明", "等待 SkinDex 发布可信适配器", "适配器可用前继续保留当前 Codex 主题"],
@@ -128,15 +128,15 @@ function getInstallGuide(theme: Theme): InstallGuide {
       secondaryUrl: theme.downloadUrl,
       secondaryLabel: "查看原始 Release ↗",
       canUseInCodex: false,
-      statusLabel: "适配器开发中",
+      statusLabel: "暂不支持导入",
       supportLevel: "adapter-pending",
     };
   }
 
   return {
     kind: "styler",
-    buttonLabel: "查看兼容状态",
-    eyebrow: "CODEX STYLER · ADAPTER PENDING",
+    buttonLabel: "查看主题详情",
+    eyebrow: "第三方主题来源",
     title: `${theme.name} 暂未开放一键导入`,
     description: "这类场景主题依赖第三方 Codex Styler。当前 SkinDex Skill 只展示可追溯来源，不直接分发或执行未签名安装器。",
     steps: ["先查看原项目的能力、许可和风险说明", "等待 SkinDex 发布可信适配器", "适配器可用前不要把“查看来源”当作一键安装"],
@@ -145,7 +145,7 @@ function getInstallGuide(theme: Theme): InstallGuide {
     secondaryUrl: theme.downloadUrl,
     secondaryLabel: "查看原始 Release ↗",
     canUseInCodex: false,
-    statusLabel: "适配器开发中",
+    statusLabel: "暂不支持导入",
     supportLevel: "adapter-pending",
   };
 }
@@ -162,23 +162,20 @@ function ThemePreview({ theme, large = false }: { theme: Theme; large?: boolean 
 function ThemeCard({
   theme,
   saved,
-  skillReady,
   onSave,
   onOpen,
-  onUse,
 }: {
   theme: Theme;
   saved: boolean;
-  skillReady: boolean;
   onSave: () => void;
   onOpen: () => void;
-  onUse: () => void;
 }) {
   const installGuide = getInstallGuide(theme);
   return (
     <article className="theme-card real-card">
       <button className="preview-button" onClick={onOpen} aria-label={`查看 ${theme.name} 详情`}>
         <ThemePreview theme={theme} />
+        <span className={`theme-status-pill is-${installGuide.supportLevel}`}>{installGuide.statusLabel}</span>
         <span className="preview-action">查看详情 <b>↗</b></span>
       </button>
       <div className="card-body">
@@ -209,15 +206,11 @@ function ThemeCard({
         <div className="tag-row">
           {theme.tags.map((tag) => <span key={tag}>{tag}</span>)}
         </div>
-        {installGuide.canUseInCodex ? (
-          <button className="use-now-button" onClick={onUse}>{skillReady ? installGuide.buttonLabel : "安装 SkinDex 后使用"}<span>→</span></button>
-        ) : (
-          <button className="use-now-button is-pending" onClick={onUse}>{installGuide.buttonLabel}<span>→</span></button>
-        )}
+        <button className="use-now-button" onClick={onOpen}>打开主题<span>→</span></button>
         <div className="card-footer">
           <span>★ {theme.stars}</span>
           <span className="source-label">{theme.sourceName}</span>
-          <span className={`compatibility is-${installGuide.supportLevel}`}>{installGuide.supportLevel === "adapter-pending" ? "○" : "✓"} {installGuide.statusLabel}</span>
+          <span className={`compatibility is-${installGuide.supportLevel}`}>{installGuide.statusLabel}</span>
         </div>
       </div>
     </article>
@@ -424,22 +417,23 @@ export default function Home() {
       <section className="skill-section" id="skill">
         <div className="skill-intro">
           <span className="section-index">01 / CODEX SKILL</span>
-          <h2>装一次，之后直接和主题助手说话。</h2>
-          <p>当前直接安装 <b>$skindex</b> Skill：官网是实时数据源，Skill 是对话执行层。插件等正式上架后再开放。</p>
+          <div className="skill-route" aria-label="SkinDex 使用路径"><span>官网选主题</span><b>→</b><span>$skindex</span><b>→</b><span>Codex 应用</span></div>
+          <h2>找到喜欢的主题，<br />点开就能用。</h2>
+          <p>官网负责发现主题，<b>$skindex</b> 负责在 Codex 里验证、暂存和恢复。安装一次，以后每张主题卡都从同一入口打开。</p>
           <div className="skill-actions">
-            <button onClick={() => setSkillInstallOpen(true)}>在 Codex 中开始安装 →</button>
-            <span>只需安装一次 · 以后主题直接从官网打开</span>
+            <button onClick={() => setSkillInstallOpen(true)}>安装 SkinDex <span>→</span></button>
+            <span>一次安装 · 官网主题统一入口</span>
           </div>
         </div>
         <div className="conversation-grid" aria-label="SkinDex Skill 可以完成的对话">
           <a href={skillChatUrl("把官网的蓝色信使 2007 配色应用到 Codex，并先创建恢复点。")}>
-            <span>01 / SWITCH</span><strong>“换成官网这个皮肤”</strong><p>读取官网 Manifest、检查兼容性、应用主题并保留恢复点。</p><b>开始对话 ↗</b>
+            <span>01 / 应用主题</span><strong>“换成官网这个皮肤”</strong><p>读取主题资料，确认可用范围，再暂存并保留恢复点。</p><b>用 SkinDex 打开 ↗</b>
           </a>
           <a href={skillChatUrl("我会发一张参考图片，请帮我生成一个原创 Codex 主题和预览。")}>
-            <span>02 / CREATE</span><strong>“参考这张图做一个”</strong><p>分析视觉语言、生成原创预览、提取配色并先保存在本地。</p><b>开始对话 ↗</b>
+            <span>02 / 创作主题</span><strong>“参考这张图做一个”</strong><p>分析视觉语言，生成原创预览并提取可用配色。</p><b>用 SkinDex 打开 ↗</b>
           </a>
           <a href={skillChatUrl("把刚生成的主题提交到 SkinDex；上传前先告诉我会公开哪些内容并等待确认。")}>
-            <span>03 / SUBMIT</span><strong>“做完后要不要投稿？”</strong><p>Skill 会主动询问一次；你表示愿意后，仍会展示上传内容并等待最终确认。</p><b>开始对话 ↗</b>
+            <span>03 / 投稿主题</span><strong>“把这个主题发到官网”</strong><p>先展示将公开的内容，得到确认后再进入审核队列。</p><b>用 SkinDex 打开 ↗</b>
           </a>
         </div>
       </section>
@@ -462,7 +456,7 @@ export default function Home() {
           <div className="empty-state"><span>!</span><h3>目录暂时不可用</h3><p>{loadError}</p><button onClick={() => window.location.reload()}>重新加载</button></div>
         ) : visibleThemes.length > 0 ? (
           <div className="theme-grid">
-            {visibleThemes.map((theme) => <ThemeCard key={theme.id} theme={theme} saved={saved.includes(theme.id)} skillReady={skillReady} onSave={() => toggleSaved(theme.id)} onOpen={() => setSelected(theme)} onUse={() => getInstallGuide(theme).canUseInCodex ? requestThemeUse(theme) : openInstall(theme)} />)}
+            {visibleThemes.map((theme) => <ThemeCard key={theme.id} theme={theme} saved={saved.includes(theme.id)} onSave={() => toggleSaved(theme.id)} onOpen={() => setSelected(theme)} />)}
           </div>
         ) : (
           <div className="empty-state"><span>⌕</span><h3>没有找到对应主题</h3><p>换个关键词，或清除当前筛选条件。</p><button onClick={() => { setQuery(""); setFilter("全部"); }}>查看全部主题</button></div>
@@ -513,9 +507,9 @@ export default function Home() {
               </div>
               <div className="detail-actions">
                 {getInstallGuide(selected).canUseInCodex ? (
-                  <button className="primary-action" onClick={() => requestThemeUse(selected)}>{skillReady ? "在 Codex 中使用" : "安装 SkinDex 后使用"} →</button>
+                  <button className="primary-action" onClick={() => requestThemeUse(selected)}>{skillReady ? "用 SkinDex 应用" : "安装 SkinDex 后应用"} →</button>
                 ) : (
-                  <button className="primary-action" onClick={() => openInstall(selected)}>查看兼容状态 →</button>
+                  <button className="primary-action is-secondary" onClick={() => openInstall(selected)}>查看适配说明 →</button>
                 )}
                 <a className="detail-link-button" href={selected.sourceUrl} target="_blank" rel="noreferrer">查看源仓库 ↗</a>
               </div>
