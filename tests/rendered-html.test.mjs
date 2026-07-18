@@ -62,3 +62,25 @@ test("keeps every submission private until review approval", async () => {
   assert.match(skill, /this first yes is interest, not upload consent/);
   assert.match(script, /publication: "review-required"/);
 });
+
+test("protects the owner-only review surface on every server boundary", async () => {
+  const [reviewPage, reviewAuth, reviewAction, privatePreview, publicPreview] = await Promise.all([
+    source("../app/review/page.tsx"),
+    source("../lib/reviewer-auth.ts"),
+    source("../app/api/review/[kind]/[id]/route.ts"),
+    source("../app/api/review/proposals/[id]/preview/route.ts"),
+    source("../app/api/theme-proposals/[id]/preview/route.ts"),
+  ]);
+
+  assert.match(reviewPage, /requireChatGPTUser\("\/review"\)/);
+  assert.match(reviewPage, /isConfiguredReviewer\(user\)/);
+  assert.match(reviewAuth, /THEME_HUB_REVIEWER_EMAIL/);
+  assert.match(reviewAuth, /getAuthorizedReviewer/);
+  assert.match(reviewAction, /getAuthorizedReviewer\(\)/);
+  assert.match(reviewAction, /origin !== new URL\(request\.url\)\.origin/);
+  assert.match(reviewAction, /status: APPROVED_THEME_STATUS/);
+  assert.match(reviewAction, /curation-required/);
+  assert.match(privatePreview, /getAuthorizedReviewer\(\)/);
+  assert.match(privatePreview, /Cache-Control": "private, no-store"/);
+  assert.match(publicPreview, /eq\(themeProposals\.status, APPROVED_THEME_STATUS\)/);
+});

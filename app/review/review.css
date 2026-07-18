@@ -1,0 +1,55 @@
+.review-shell { min-height: 100vh; padding: 36px max(24px, calc((100vw - 1180px) / 2)) 80px; background: #f4f4f8; color: #171923; }
+.review-topbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.review-brand { display: flex; align-items: center; gap: 10px; font-weight: 760; }
+.review-brand span { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px; color: white; background: #635bff; }
+.review-topbar nav { display: flex; align-items: center; gap: 14px; font-size: 12px; }
+.review-topbar nav a:last-child { border: 1px solid #d7d8e2; border-radius: 9px; padding: 9px 12px; background: white; }
+.review-hero { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: end; margin: 70px 0 30px; }
+.review-hero small { color: #635bff; font: 680 10px/1.2 var(--font-geist-mono); letter-spacing: .08em; }
+.review-hero h1 { margin: 12px 0 9px; font-size: clamp(38px, 6vw, 68px); letter-spacing: -.065em; }
+.review-hero p { max-width: 650px; margin: 0; color: #666a78; line-height: 1.7; }
+.review-count { min-width: 120px; border-radius: 18px; padding: 18px; color: white; background: #171923; text-align: center; }
+.review-count strong { display: block; font-size: 32px; }
+.review-count span { font-size: 10px; color: #b9bbc5; }
+.review-section { margin-top: 28px; }
+.review-section-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 12px; }
+.review-section-heading h2 { margin: 0; font-size: 22px; }
+.review-section-heading p { margin: 0; color: #767987; font-size: 11px; }
+.review-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.review-card { overflow: hidden; border: 1px solid #dedfe7; border-radius: 16px; background: white; box-shadow: 0 10px 35px rgba(25, 27, 42, .05); }
+.review-preview { height: 230px; background: #e8e9ef; }
+.review-preview img { width: 100%; height: 100%; object-fit: cover; }
+.review-card-body { padding: 20px; }
+.review-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.review-meta span { border-radius: 999px; padding: 6px 8px; color: #535664; background: #f0f0f5; font: 600 9px/1 var(--font-geist-mono); }
+.review-card h3 { margin: 14px 0 4px; font-size: 21px; }
+.review-card .author { margin: 0 0 14px; color: #797c88; font-size: 11px; }
+.review-card .notes { min-height: 36px; color: #555966; font-size: 12px; line-height: 1.55; }
+.review-card dl { display: grid; gap: 8px; margin: 18px 0; padding: 14px 0; border-block: 1px solid #ececf1; }
+.review-card dl div { display: grid; grid-template-columns: 90px 1fr; gap: 10px; font-size: 11px; }
+.review-card dt { color: #898c98; }
+.review-card dd { min-width: 0; margin: 0; overflow-wrap: anywhere; }
+.review-card dd a { color: #635bff; }
+.review-palette { display: flex; gap: 6px; margin: 16px 0; }
+.review-palette span { flex: 1; height: 34px; border-radius: 8px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+.review-actions { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.review-actions button { min-height: 42px; border-radius: 10px; padding: 10px 14px; cursor: pointer; font-weight: 680; }
+.review-actions .approve { border: 0; color: white; background: #635bff; }
+.review-actions .reject { border: 1px solid #dedfe7; color: #aa3928; background: white; }
+.review-actions button:disabled { cursor: wait; opacity: .6; }
+.review-actions p { grid-column: 1 / -1; margin: 4px 0 0; color: #aa3928; font-size: 11px; }
+.review-empty { border: 1px dashed #cfd1dc; border-radius: 16px; padding: 46px 22px; color: #767987; background: rgba(255,255,255,.6); text-align: center; }
+.review-denied { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: #f4f4f8; }
+.review-denied > div { max-width: 500px; border: 1px solid #dedfe7; border-radius: 20px; padding: 36px; background: white; text-align: center; }
+.review-denied h1 { margin: 0 0 12px; }
+.review-denied p { color: #6e7180; line-height: 1.65; }
+.review-denied a { display: inline-flex; margin-top: 12px; border-radius: 10px; padding: 11px 16px; color: white; background: #171923; }
+
+@media (max-width: 760px) {
+  .review-shell { padding-inline: 18px; }
+  .review-topbar { align-items: flex-start; }
+  .review-topbar nav { flex-direction: column; align-items: flex-end; }
+  .review-hero { grid-template-columns: 1fr; margin-top: 48px; }
+  .review-count { justify-self: start; }
+  .review-grid { grid-template-columns: 1fr; }
+}

@@ -17,6 +17,7 @@ GitHub 源码：<https://github.com/0xagata-prog/codex-theme-hub>
 - `codex-theme-v1` 的校验、托管暂存、恢复点与剪贴板适配器。
 - 官网目录查询、逐主题 Manifest API、参考图生成流程与经确认提交审核。
 - Skill 完成本地主题后会主动询问一次是否愿意投稿；表示愿意不等于授权上传，展示公开字段并再次确认后才提交。
+- `/review` 使用 ChatGPT 登录并在服务端核对单一审核账号。生成主题可以由所有者通过并发布；GitHub 仓库只能先接受进入人工编目，资料不完整时不会自动公开。
 - 官网到 Codex 的 `$theme-hub` 对话深链；链接只预填对话，不会绕过用户确认。
 
 产品框架见 [docs/theme-hub-framework.md](docs/theme-hub-framework.md)。Skill 源码位于 [plugins/codex-theme-hub/skills/theme-hub](plugins/codex-theme-hub/skills/theme-hub)。
