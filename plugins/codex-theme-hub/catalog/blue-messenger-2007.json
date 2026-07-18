@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "theme-hub/v1",
+  "id": "blue-messenger-2007",
+  "name": "蓝色信使 2007 · Blue Messenger 2007",
+  "summary": "从用户参考图提炼的冰蓝渐变、三栏工作区与复古桌面软件质感；预览含 QQ 企鹅怀旧同人元素，非腾讯官方产品。",
+  "author": {
+    "name": "Theme Hub × You",
+    "url": "https://codex-theme-hub-cn.jyyang040703.chatgpt.site/"
+  },
+  "source": {
+    "repository": "https://codex-theme-hub-cn.jyyang040703.chatgpt.site/",
+    "revision": "theme-hub-lab@2026-07-18",
+    "license": "NOASSERTION"
+  },
+  "compatibility": {
+    "surfaces": ["codex-desktop"],
+    "os": ["macos", "windows", "linux"]
+  },
+  "preview": {
+    "imageUrl": "https://codex-theme-hub-cn.jyyang040703.chatgpt.site/themes/blue-messenger-2007.png"
+  },
+  "package": {
+    "format": "codex-theme-v1",
+    "inline": "codex-theme-v1:{\"codeThemeId\":\"codex\",\"theme\":{\"accent\":\"#1674D1\",\"contrast\":74,\"fonts\":{\"code\":\"Cascadia Mono\",\"ui\":\"Noto Sans TC\"},\"ink\":\"#18356A\",\"opaqueWindows\":true,\"semanticColors\":{\"diffAdded\":\"#2E9D53\",\"diffRemoved\":\"#D9493F\",\"skill\":\"#6A75D7\"},\"surface\":\"#EAF6FF\"},\"variant\":\"light\"}"
+  },
+  "install": {
+    "adapter": "codex-native-v1",
+    "requiresUserConfirmation": true,
+    "rollback": "restore-point"
+  },
+  "updatedAt": "2026-07-18T05:18:00Z"
+}

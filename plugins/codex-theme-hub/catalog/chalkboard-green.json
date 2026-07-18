@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "theme-hub/v1",
+  "id": "chalkboard-green",
+  "name": "Chalkboard Green",
+  "summary": "沉稳低眩光的黑板绿配色，适合长时间阅读与专注工作。",
+  "author": {
+    "name": "Robin Li",
+    "url": "https://github.com/robinli"
+  },
+  "source": {
+    "repository": "https://github.com/robinli/codex-material-themes",
+    "revision": "main@2026-07-17",
+    "license": "NOASSERTION"
+  },
+  "compatibility": {
+    "surfaces": ["codex-desktop"],
+    "os": ["macos", "windows", "linux"]
+  },
+  "preview": {
+    "imageUrl": "https://raw.githubusercontent.com/robinli/codex-material-themes/main/public/themes/Theme01.png"
+  },
+  "package": {
+    "format": "codex-theme-v1",
+    "inline": "codex-theme-v1:{\"codeThemeId\":\"codex\",\"theme\":{\"accent\":\"#D4B95E\",\"contrast\":68,\"fonts\":{\"code\":\"Cascadia Mono\",\"ui\":\"Noto Sans TC\"},\"ink\":\"#E8E3D3\",\"opaqueWindows\":true,\"semanticColors\":{\"diffAdded\":\"#9EBB84\",\"diffRemoved\":\"#D9907E\",\"skill\":\"#C3A7D8\"},\"surface\":\"#18382B\"},\"variant\":\"dark\"}"
+  },
+  "install": {
+    "adapter": "codex-native-v1",
+    "requiresUserConfirmation": true,
+    "rollback": "restore-point"
+  },
+  "updatedAt": "2026-07-17T13:07:21Z"
+}

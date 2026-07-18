@@ -27,6 +27,27 @@ const skinBase = "https://raw.githubusercontent.com/Wangnov/awesome-codex-skins/
 
 export const seedThemes: SeedTheme[] = [
   {
+    id: "blue-messenger-2007",
+    name: "蓝色信使 2007 · Blue Messenger 2007",
+    author: "Theme Hub × You",
+    authorUrl: "https://codex-theme-hub-cn.jyyang040703.chatgpt.site/",
+    platform: "桌面端",
+    mode: "浅色",
+    description: "从用户参考图提炼的冰蓝渐变、三栏工作区与复古桌面软件质感；预览含 QQ 企鹅怀旧同人元素，当前可导入部分为原创配色。",
+    tags: ["参考图生成", "QQ 怀旧同人", "复古蓝", "原生导入"],
+    palette: ["#EAF6FF", "#18356A", "#1674D1"],
+    previewUrl: "/themes/blue-messenger-2007.png",
+    sourceUrl: "https://codex-theme-hub-cn.jyyang040703.chatgpt.site/#themes",
+    downloadUrl: "https://codex-theme-hub-cn.jyyang040703.chatgpt.site/#themes",
+    sourceName: "Theme Hub Lab",
+    sourceRepo: "theme-hub/lab",
+    stars: 0,
+    license: "非官方同人概念 · QQ 企鹅归腾讯所有",
+    verifiedVersion: "概念预览 · codex-theme-v1",
+    featured: true,
+    updatedAt: "2026-07-18T13:18:00+08:00",
+  },
+  {
     id: "chalkboard-green",
     name: "Chalkboard Green",
     author: "Robin Li",

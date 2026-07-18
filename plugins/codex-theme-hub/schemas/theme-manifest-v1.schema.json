@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Codex Theme Hub Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "summary",
+    "author",
+    "source",
+    "compatibility",
+    "preview",
+    "package",
+    "install",
+    "updatedAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "theme-hub/v1" },
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "maxLength": 80 },
+    "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "summary": { "type": "string", "minLength": 1, "maxLength": 280 },
+    "author": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "url"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "url": { "type": "string", "format": "uri", "pattern": "^https://" }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "revision", "license"],
+      "properties": {
+        "repository": { "type": "string", "format": "uri", "pattern": "^https://" },
+        "revision": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "license": { "type": "string", "minLength": 1, "maxLength": 120 }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["surfaces", "os"],
+      "properties": {
+        "surfaces": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["codex-desktop", "codex-cli"] }
+        },
+        "os": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["macos", "windows", "linux"] }
+        },
+        "codexBuild": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "string", "minLength": 1 },
+            "max": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "preview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["imageUrl"],
+      "properties": {
+        "imageUrl": { "type": "string", "format": "uri", "pattern": "^https://" }
+      }
+    },
+    "package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format"],
+      "properties": {
+        "format": { "enum": ["codex-theme-v1", "codexskin-v1", "codex-styler-theme-v1"] },
+        "inline": { "type": "string", "minLength": 1, "maxLength": 200000 },
+        "url": { "type": "string", "format": "uri", "pattern": "^https://" },
+        "integrity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["algorithm", "value"],
+          "properties": {
+            "algorithm": { "const": "sha256" },
+            "value": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+          }
+        }
+      },
+      "oneOf": [
+        {
+          "properties": { "format": { "const": "codex-theme-v1" } },
+          "required": ["inline"]
+        },
+        {
+          "properties": { "format": { "enum": ["codexskin-v1", "codex-styler-theme-v1"] } },
+          "required": ["url", "integrity"]
+        }
+      ]
+    },
+    "install": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["adapter", "requiresUserConfirmation", "rollback"],
+      "properties": {
+        "adapter": { "enum": ["codex-native-v1", "codexskin-runtime-v1", "codex-styler-v1"] },
+        "requiresUserConfirmation": { "const": true },
+        "rollback": { "const": "restore-point" }
+      }
+    },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  }
+}

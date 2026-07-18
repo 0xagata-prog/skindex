@@ -1,4 +1,20 @@
-# vinext-starter
+# Codex Theme Hub
+
+Codex 主题与皮肤的聚合目录，以及面向“一次选择、在 Codex 中完成安装”的插件底座。
+
+公开站点：<https://codex-theme-hub-cn.jyyang040703.chatgpt.site/>
+
+## 当前能力
+
+- D1 真实主题目录与匿名投稿审核队列。
+- 统一的 `Theme Manifest v1` 数据契约。
+- 仓库级 `codex-theme-hub` Marketplace 与插件骨架。
+- `codex-theme-v1` 的校验、托管暂存、恢复点与剪贴板适配器。
+- 官网到 Codex 的深链协议；公开插件发布前暂不替换线上按钮。
+
+产品框架见 [docs/theme-hub-framework.md](docs/theme-hub-framework.md)。插件实现见 [plugins/codex-theme-hub](plugins/codex-theme-hub)。
+
+## 网站开发
 
 A clean full-stack starter running on
 [vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and

@@ -56,6 +56,7 @@ const materialSemanticColors: Record<string, { diffAdded: string; diffRemoved: s
   "harbor-fog": { diffAdded: "#397253", diffRemoved: "#A34C4C", skill: "#76558E" },
   "amber-terminal": { diffAdded: "#A6C77B", diffRemoved: "#E08A72", skill: "#C7A5D9" },
   "indigo-workwear": { diffAdded: "#86A98B", diffRemoved: "#D18478", skill: "#A696BB" },
+  "blue-messenger-2007": { diffAdded: "#2E9D53", diffRemoved: "#D9493F", skill: "#6A75D7" },
 };
 
 const materialContrast: Record<string, number> = {
@@ -66,6 +67,7 @@ const materialContrast: Record<string, number> = {
   "harbor-fog": 71,
   "amber-terminal": 78,
   "indigo-workwear": 72,
+  "blue-messenger-2007": 74,
 };
 
 const skinDownloads: Record<string, string> = {
@@ -76,27 +78,30 @@ const skinDownloads: Record<string, string> = {
 };
 
 function getInstallGuide(theme: Theme): InstallGuide {
-  if (theme.sourceRepo === "robinli/codex-material-themes") {
+  if (theme.verifiedVersion.includes("codex-theme-v1")) {
     const [surface, ink, accent] = theme.palette;
+    const isLabConcept = theme.sourceRepo === "theme-hub/lab";
     const copyValue = `codex-theme-v1:${JSON.stringify({
       codeThemeId: "codex",
       theme: {
         accent,
-        contrast: materialContrast[theme.id],
+        contrast: materialContrast[theme.id] ?? 72,
         fonts: { code: "Cascadia Mono", ui: "Noto Sans TC" },
         ink,
         opaqueWindows: true,
-        semanticColors: materialSemanticColors[theme.id],
+        semanticColors: materialSemanticColors[theme.id] ?? { diffAdded: "#397253", diffRemoved: "#A34C4C", skill: "#76558E" },
         surface,
       },
-      variant: "dark",
+      variant: theme.mode === "浅色" ? "light" : "dark",
     })}`;
     return {
       kind: "copy",
-      buttonLabel: "复制并导入",
-      eyebrow: "CODEX NATIVE THEME",
+      buttonLabel: isLabConcept ? "导入概念配色" : "复制并导入",
+      eyebrow: isLabConcept ? "REFERENCE-TO-THEME LAB" : "CODEX NATIVE THEME",
       title: `导入 ${theme.name}`,
-      description: "这是 Codex 原生主题配置。网站可以帮你复制完整设置，但浏览器不能越过系统安全限制直接修改 Codex。",
+      description: isLabConcept
+        ? "这是从用户参考图提炼的原创概念主题。当前导入会应用冰蓝配色；复古三栏布局和机器人伙伴属于后续皮肤运行时，不会随原生配色一起安装。"
+        : "这是 Codex 原生主题配置。网站可以帮你复制完整设置，但浏览器不能越过系统安全限制直接修改 Codex。",
       steps: ["点击下方按钮复制完整主题设置", "打开 Codex → 设置 → 外观 → 导入", "粘贴设置并选择“导入主题”"],
       copyValue,
     };
@@ -332,7 +337,7 @@ export default function Home() {
         <div className="hero-copy">
           <div className="hero-label"><span>LIVE CATALOG</span><i>●</i> 公开来源 · 持久数据</div>
           <h1>真实主题，<br /><em>真实来源。</em></h1>
-          <p>聚合社区公开发布的 Codex 主题与皮肤。每条记录都链接到原作者、源仓库和真实预览。</p>
+          <p>聚合社区公开主题，也把用户参考图转化为原创概念主题。每条记录都标明来源、验证状态和真实可用范围。</p>
           <form className="hero-search" onSubmit={(event) => event.preventDefault()}>
             <label htmlFor="theme-search" className="sr-only">搜索主题、作者或仓库</label>
             <span aria-hidden="true">⌕</span>
@@ -356,7 +361,7 @@ export default function Home() {
             </div>
           </div>
           <div className="floating-chip chip-one"><b>GitHub</b> 来源可追溯</div>
-          <div className="floating-chip chip-two"><span>●</span> 预览来自原仓库</div>
+          <div className="floating-chip chip-two"><span>●</span> {featured?.sourceName === "Theme Hub Lab" ? "参考图同人创作" : "预览来自原仓库"}</div>
         </div>
       </section>
 
@@ -387,13 +392,14 @@ export default function Home() {
 
       <section className="sources-section" id="sources">
         <div className="market-heading">
-          <div><span className="section-index">02 / SOURCES</span><h2>公开数据来源</h2></div>
-          <p>目录只聚合元数据，主题文件、预览图片与使用说明仍由原作者仓库提供。</p>
+          <div><span className="section-index">02 / SOURCES</span><h2>主题来源</h2></div>
+          <p>公开项目保留原仓库链接；参考图生成主题由 Theme Hub Lab 提炼原创预览与可导入配色。</p>
         </div>
         <div className="source-grid">
           <a href="https://github.com/robinli/codex-material-themes" target="_blank" rel="noreferrer"><span>01</span><h3>Codex Material Themes</h3><p>12 款可通过 codex-theme-v1 导入的材质配色主题。</p><b>打开 GitHub ↗</b></a>
           <a href="https://github.com/xuhuanstudio/codex-styler" target="_blank" rel="noreferrer"><span>02</span><h3>Codex Styler</h3><p>开源主题编辑器、场景皮肤与互动伙伴系统。</p><b>打开 GitHub ↗</b></a>
           <a href="https://github.com/Wangnov/awesome-codex-skins" target="_blank" rel="noreferrer"><span>03</span><h3>Awesome Codex Skins</h3><p>.codexskin 标准、认证注册表和真实应用截图。</p><b>打开 GitHub ↗</b></a>
+          <a href="#themes"><span>04</span><h3>Theme Hub Lab</h3><p>把用户参考图转化为原创主题概念、预览和可导入配色。</p><b>查看实验主题 ↑</b></a>
         </div>
         {syncedAt && <p className="sync-note">数据库响应时间：{new Date(syncedAt).toLocaleString("zh-CN")} · 元数据更新以源仓库为准</p>}
       </section>
