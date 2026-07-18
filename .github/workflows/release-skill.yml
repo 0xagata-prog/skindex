@@ -1,0 +1,33 @@
+name: Release Theme Hub Skill
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Package standalone Skill
+        run: |
+          mkdir -p release/theme-hub
+          cp -R plugins/codex-theme-hub/skills/theme-hub/. release/theme-hub/
+          cd release
+          zip -r ../theme-hub-skill.zip theme-hub
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$TAG"; then
+            gh release upload "$TAG" theme-hub-skill.zip --clobber
+          else
+            gh release create "$TAG" theme-hub-skill.zip --generate-notes --title "Theme Hub Skill $TAG"
+          fi

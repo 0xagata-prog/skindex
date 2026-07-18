@@ -38,6 +38,10 @@ $theme-hub 参考我发的图片生成一个原创主题。
 
 当前 Skill 不需要单独连接 GPT API。`.codexskin` 与 Codex Styler 适配器尚未开放；它们只展示可追溯来源，不作为一键安装入口。
 
+## 发布 Skill
+
+GitHub 是唯一发布源。推送 `v*` 版本标签后，[Release Skill 工作流](.github/workflows/release-skill.yml) 会从 `plugins/codex-theme-hub/skills/theme-hub` 重新打包并创建或更新同名 Release。
+
 ## 网站开发
 
 A clean full-stack starter running on
