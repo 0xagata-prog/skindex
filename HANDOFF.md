@@ -2,11 +2,12 @@ Goal:
 Publish and maintain SkinDex at the owner-selected canonical URL `https://codex-skindex.vercel.app` while preserving the existing ChatGPT Sites deployment as the D1/R2/SIWC backend.
 
 Current state:
-The public GitHub repository is `https://github.com/0xagata-prog/skindex`. The canonical Skill name is `skindex`, invocation is `$skindex`, protocol is `skindex/v1`, and the released repository Skill remains the installation source. A Vercel project named `codex-skindex` owns the exact production alias `https://codex-skindex.vercel.app` and proxies public routes to the existing Sites backend. Vercel deployment `dpl_FUWH45WpRbh8N2BEfVqrbEJLqWdM` is READY with no alias error. Git commit `1468229a01988115b19bfbea5018dde1999af60a` contains the latest production website revision; the stable Skill remains tagged `v0.5.0`. Sites version 21 is published successfully from that commit with environment revision 2, and GitHub release `v0.5.0` contains the verified Skill ZIP.
+The public GitHub repository is `https://github.com/0xagata-prog/skindex`. The canonical Skill name is `skindex`, invocation is `$skindex`, protocol is `skindex/v1`, and the released repository Skill remains the installation source. A Vercel project named `codex-skindex` owns the exact production alias `https://codex-skindex.vercel.app` and proxies public routes to the existing Sites backend. Vercel deployment `dpl_FUWH45WpRbh8N2BEfVqrbEJLqWdM` is READY with no alias error. Git commit `1a83a271a8d62a8dd7bd84968fe098ce860bde5c` contains the latest production website revision; the stable Skill remains tagged `v0.5.0`. Sites version 22 is published successfully from that commit with environment revision 2, and GitHub release `v0.5.0` contains the verified Skill ZIP.
 
 Files touched or relevant:
 README.md
 app/layout.tsx
+app/globals.css
 app/page.tsx
 app/api/submissions/route.ts
 app/api/theme-proposals/route.ts
@@ -39,3 +40,6 @@ The actionable application findings above are fixed. Public submissions now have
 
 Homepage cohesion pass (2026-07-18):
 The Skill section now uses the same light card, border, typography, and purple/lime accent system as the theme catalog instead of appearing as a separate dark tool panel. Every catalog card uses one consistent `打开主题` action; installability is expressed with matching `可直接应用`, `可应用配色`, or `暂不支持导入` pills. Technical `查看兼容状态` and `适配器开发中` copy was removed from the main card surface. Supported themes expose `用 SkinDex 应用` inside details; unsupported third-party themes expose `查看适配说明` without pretending to be installable. Desktop and 390px browser QA passed with 14 consistent theme actions and no fresh console errors.
+
+Theme-card alignment standard (2026-07-18):
+Catalog cards are equal-height flex columns. Titles reserve two lines (48px), descriptions reserve three lines (54px), tags reserve one row (27px), and `打开主题` is anchored to the card bottom with `margin-top: auto`. The duplicated footer compatibility pill was removed because the top-right status pill is the single compatibility indicator. Production browser geometry verified identical card heights and exact button Y coordinates across the first two three-column rows, with 14 cards loaded and no console errors or error overlay.
