@@ -1,0 +1,8 @@
+Codex Theme Hub 插件开发预览版
+
+1. 解压压缩包，并在终端进入解压后的根目录。
+2. 运行：codex plugin marketplace add .
+3. 重启 Codex，在 /plugins 中找到并安装 Codex Theme Hub。
+4. 新建对话，例如输入：$theme-hub 帮我从官网挑一个低眩光主题。
+
+公开插件目录审核通过后，官网会改为正式的一键安装入口。

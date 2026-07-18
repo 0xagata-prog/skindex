@@ -35,3 +35,18 @@ export const submissions = sqliteTable("submissions", {
   status: text("status").notNull().default("pending"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
+
+export const themeProposals = sqliteTable("theme_proposals", {
+  id: text("id").primaryKey(),
+  themeName: text("theme_name").notNull(),
+  authorName: text("author_name").notNull(),
+  platform: text("platform").notNull(),
+  notes: text("notes").notNull().default(""),
+  palette: text("palette").notNull(),
+  previewKey: text("preview_key").notNull(),
+  previewMime: text("preview_mime").notNull(),
+  sourceType: text("source_type").notNull().default("skill-generated"),
+  consentAt: text("consent_at").notNull(),
+  status: text("status").notNull().default("pending"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});

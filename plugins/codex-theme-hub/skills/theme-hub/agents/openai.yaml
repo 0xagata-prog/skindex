@@ -1,4 +1,4 @@
 interface:
   display_name: "Codex Theme Hub"
-  short_description: "用自然语言安全安装、切换并恢复 Codex 主题的完整工作流"
-  default_prompt: "使用 $theme-hub 安装并应用我选择的主题，先检查兼容性并创建恢复点。"
+  short_description: "对话发现、生成、切换并提交 Codex 主题"
+  default_prompt: "使用 $theme-hub 从官网推荐一个主题，或根据我发的图片生成一个新主题。"

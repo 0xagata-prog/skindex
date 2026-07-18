@@ -2,36 +2,43 @@
 
 ## 产品分工
 
-- 官网负责发现、筛选、预览、收藏与可信来源说明。
-- Codex 插件负责理解用户意图、校验 Manifest、托管主题文件、生成恢复点并调用适配器。
-- 适配器负责把统一 Manifest 转换成某种上游主题格式的安全操作。
-- Theme Hub 不要求用户理解 App Manager、下载目录或各个上游项目的安装差异。
+- 官网是数据源：发现、筛选、预览、Manifest API、插件下载与审核队列。
+- Codex Theme Hub 插件是分发包，内含 `$theme-hub` Skill。
+- Skill 是对话入口：推荐官网主题、生成新主题、安装切换、恢复，以及经确认提交审核。
+- 适配器负责把统一 Manifest 转成安全、可恢复的 Codex 外观操作。
 
-## 主流程
+## 三条用户主流程
 
 ```text
-主题卡片
-  → codex://new?prompt=<encoded>
-  → 用户发送预填请求
-  → Codex Theme Hub 插件
-  → Manifest v1 校验
-  → 托管存储 + 恢复点
-  → 格式适配器
-  → 用户确认 Codex 外观变更
+官网主题卡
+  → 打开 Codex 对话并点名 $theme-hub
+  → Skill 从官网读取 Manifest
+  → 校验 + 恢复点 + 用户确认导入
+
+用户发参考图
+  → Skill 生成原创预览并提取配色
+  → 先保存和安装到本地
+  → 询问是否提交官网
+  → 用户明确同意后上传预览与元数据
+  → 私有审核队列 → 审核通过才公开
+
+用户后悔
+  → “恢复上一个主题”
+  → Skill 读取恢复点
+  → 用户确认外观恢复
 ```
 
-官方深链只负责打开 Codex并预填内容，不会自动发送。第一次使用还要求 Codex 已知 Theme Hub Marketplace；公开 Marketplace 未完成前，不替换线上按钮。
+## 当前边界
 
-## v0.1 范围
+- `codex-theme-v1 → codex-native-v1` 已可验证、暂存和恢复。
+- `.codexskin` 与 Codex Styler 仍只识别格式，不自动执行。
+- Codex 没有公开的外观自动导入深链，最终导入仍需用户在 Appearance 中确认。
+- 插件尚未进入公开 Plugins Directory。官网当前提供开发预览包；正式一键安装要等 OpenAI 审核。
+- 生成主题绝不默认上传；提交必须再次取得明确同意，并且先进入审核队列。
 
-- 完成 `Theme Manifest v1`。
-- 完成 `codex-theme-v1 → codex-native-v1` 的校验、托管暂存、剪贴板准备与恢复点。
-- 识别 `.codexskin` 和 Codex Styler，但暂不自动执行。
-- 不修改 Codex 应用包，不启用调试端口，不执行主题仓库提供的命令。
+## 下一里程碑
 
-## 后续里程碑
-
-1. 将站点目录转换为逐主题 Manifest API，并为远程包补齐 SHA-256。
-2. 发布 Theme Hub Marketplace，让插件 mention 可安装。
-3. 将官网按钮切换为“在 Codex 中使用”，保留无法安装插件时的降级流程。
-4. 将 `.codexskin` 与 Styler 能力封装为内部适配器，并完成跨平台恢复测试。
+1. 在全新 Codex 环境完成开发预览包的首次安装测试。
+2. 准备公开插件审核所需的隐私政策、条款、支持页、5 个正向与 3 个负向测试。
+3. 提交 skills-only 插件审核；通过后将官网按钮升级为公开目录的一键安装。
+4. 为 `.codexskin` 和 Styler 建立可信、可回滚的内部适配器。

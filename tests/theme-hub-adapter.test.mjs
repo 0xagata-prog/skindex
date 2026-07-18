@@ -6,10 +6,13 @@ import test from "node:test";
 
 import {
   confirmTransaction,
+  catalogThemes,
+  createLocalManifest,
   planManifest,
   readStatus,
   restorePlan,
   stageManifest,
+  submitThemeProposal,
   validateManifest,
 } from "../plugins/codex-theme-hub/skills/theme-hub/scripts/theme-hub.mjs";
 
@@ -91,4 +94,44 @@ test("uses the official default when no prior Theme Hub theme exists", async () 
   const staged = await stageManifest(await sampleManifest(), { stateRoot });
   const restore = await restorePlan(staged.transactionId, { stateRoot });
   assert.equal(restore.nextAction, "select-codex-default");
+});
+
+test("creates a valid local theme manifest from generated colors", () => {
+  const manifest = createLocalManifest({
+    id: "generated-ocean",
+    name: "Generated Ocean",
+    author: "Theme Maker",
+    surface: "#EAF6FF",
+    ink: "#18356A",
+    accent: "#1674D1",
+    mode: "light",
+    now: () => new Date("2026-07-18T00:00:00Z"),
+  });
+  assert.deepEqual(validateManifest(manifest), { ok: true, errors: [], warnings: [] });
+  assert.match(manifest.package.inline, /"variant":"light"/);
+});
+
+test("queries the live catalog shape without inventing install support", async () => {
+  const fetchImpl = async () => Response.json({ themes: [
+    { id: "native-blue", name: "Native Blue", description: "calm blue", mode: "浅色", platform: "桌面端", tags: ["蓝色"], verifiedVersion: "codex-theme-v1", sourceName: "Lab" },
+    { id: "pet-scene", name: "Pet Scene", description: "animated pet", mode: "深色", platform: "桌面端", tags: ["伙伴"], verifiedVersion: "preview-only", sourceName: "Community" },
+  ] });
+  const result = await catalogThemes({ query: "blue", fetchImpl });
+  assert.equal(result.total, 1);
+  assert.equal(result.themes[0].id, "native-blue");
+  assert.equal(result.themes[0].nativeImport, true);
+});
+
+test("refuses generated-theme upload without explicit consent", async () => {
+  await assert.rejects(
+    submitThemeProposal({
+      name: "Private Theme",
+      author: "Theme Maker",
+      platform: "桌面端",
+      palette: "#111111,#EEEEEE,#635BFF",
+      previewPath: "/does/not/matter.png",
+      consent: "no",
+    }),
+    /explicit --consent yes/,
+  );
 });

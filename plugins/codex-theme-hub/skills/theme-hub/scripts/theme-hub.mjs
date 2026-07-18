@@ -15,6 +15,7 @@ const FORMAT_ADAPTERS = Object.freeze({
 });
 
 const AVAILABLE_ADAPTERS = new Set(["codex-native-v1"]);
+const DEFAULT_ENDPOINT = "https://codex-theme-hub-cn.jyyang040703.chatgpt.site";
 const FORBIDDEN_KEYS = new Set([
   "command",
   "commands",
@@ -401,6 +402,139 @@ export async function readStatus({ stateRoot = stateRootFromEnvironment() } = {}
   });
 }
 
+function endpointUrl(endpoint, pathname, search = {}) {
+  const base = new URL(endpoint || DEFAULT_ENDPOINT);
+  if (base.protocol !== "https:") throw new Error("Theme Hub endpoint must use HTTPS");
+  const url = new URL(pathname, base);
+  for (const [key, value] of Object.entries(search)) {
+    if (value !== undefined && value !== "") url.searchParams.set(key, value);
+  }
+  return url;
+}
+
+async function responseJson(response) {
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || `Theme Hub request failed with ${response.status}`);
+  return data;
+}
+
+export async function catalogThemes({ endpoint = DEFAULT_ENDPOINT, query = "", fetchImpl = fetch } = {}) {
+  const data = await responseJson(await fetchImpl(endpointUrl(endpoint, "/api/themes")));
+  const normalized = query.trim().toLowerCase();
+  const themes = Array.isArray(data.themes) ? data.themes : [];
+  const matches = themes.filter((theme) => {
+    if (!normalized) return true;
+    const text = [theme.id, theme.name, theme.description, theme.mode, theme.platform, ...(theme.tags ?? [])].join(" ").toLowerCase();
+    return text.includes(normalized);
+  });
+  return {
+    endpoint,
+    query,
+    total: matches.length,
+    themes: matches.slice(0, 8).map((theme) => ({
+      id: theme.id,
+      name: theme.name,
+      description: theme.description,
+      platform: theme.platform,
+      mode: theme.mode,
+      nativeImport: String(theme.verifiedVersion ?? "").includes("codex-theme-v1"),
+      source: theme.sourceName,
+    })),
+  };
+}
+
+export async function fetchThemeManifest(themeId, outputPath, { endpoint = DEFAULT_ENDPOINT, fetchImpl = fetch } = {}) {
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(themeId ?? "")) throw new Error("theme ID must be lowercase kebab-case");
+  const url = endpointUrl(endpoint, "/api/themes", { format: "manifest", id: themeId });
+  const manifest = await responseJson(await fetchImpl(url));
+  assertValid(manifest);
+  const resolved = path.resolve(outputPath);
+  await mkdir(path.dirname(resolved), { recursive: true });
+  await writeFile(resolved, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+  return { status: "fetched", themeId, manifestPath: resolved, manifestUrl: url.toString() };
+}
+
+function validHex(value) {
+  return /^#[0-9a-f]{6}$/i.test(value ?? "");
+}
+
+export function createLocalManifest({ id, name, author, surface, ink, accent, mode = "dark", now = () => new Date() }) {
+  if (![surface, ink, accent].every(validHex)) throw new Error("surface, ink, and accent must be six-digit hex colors");
+  if (!new Set(["light", "dark"]).has(mode)) throw new Error("mode must be light or dark");
+  const manifest = {
+    schemaVersion: "theme-hub/v1",
+    id,
+    name,
+    summary: "Locally generated Theme Hub color theme.",
+    author: { name: author, url: DEFAULT_ENDPOINT },
+    source: { repository: DEFAULT_ENDPOINT, revision: `local@${now().toISOString()}`, license: "NOASSERTION" },
+    compatibility: { surfaces: ["codex-desktop"], os: ["macos", "windows", "linux"] },
+    preview: { imageUrl: `${DEFAULT_ENDPOINT}/og.png` },
+    package: {
+      format: "codex-theme-v1",
+      inline: `codex-theme-v1:${JSON.stringify({
+        codeThemeId: "codex",
+        theme: {
+          accent,
+          contrast: 72,
+          fonts: { code: "Cascadia Mono", ui: "Noto Sans TC" },
+          ink,
+          opaqueWindows: true,
+          semanticColors: { diffAdded: "#397253", diffRemoved: "#A34C4C", skill: "#76558E" },
+          surface,
+        },
+        variant: mode,
+      })}`,
+    },
+    install: { adapter: "codex-native-v1", requiresUserConfirmation: true, rollback: "restore-point" },
+    updatedAt: now().toISOString(),
+  };
+  assertValid(manifest);
+  return manifest;
+}
+
+function previewMime(filePath) {
+  const extension = path.extname(filePath).toLowerCase();
+  if (extension === ".jpg" || extension === ".jpeg") return "image/jpeg";
+  if (extension === ".webp") return "image/webp";
+  if (extension === ".png") return "image/png";
+  throw new Error("preview must be PNG, JPEG, or WebP");
+}
+
+export async function submitThemeProposal({
+  name,
+  author,
+  platform,
+  palette,
+  previewPath,
+  notes = "",
+  consent,
+  endpoint = DEFAULT_ENDPOINT,
+  fetchImpl = fetch,
+}) {
+  if (consent !== "yes") throw new Error("explicit --consent yes is required before uploading a proposal");
+  const colors = String(palette ?? "").split(",").map((item) => item.trim()).filter(Boolean);
+  if (colors.length < 3 || colors.length > 6 || colors.some((color) => !validHex(color))) {
+    throw new Error("palette must contain 3–6 comma-separated hex colors");
+  }
+  const bytes = await readFile(path.resolve(previewPath));
+  if (!bytes.length || bytes.length > 4 * 1024 * 1024) throw new Error("preview must be between 1 byte and 4 MB");
+  const mime = previewMime(previewPath);
+  const form = new FormData();
+  form.set("metadata", JSON.stringify({
+    themeName: name,
+    authorName: author,
+    platform,
+    notes,
+    palette: colors,
+    sourceType: "reference-image",
+    consent: true,
+  }));
+  form.set("preview", new Blob([bytes], { type: mime }), path.basename(previewPath));
+  const data = await responseJson(await fetchImpl(endpointUrl(endpoint, "/api/theme-proposals"), { method: "POST", body: form }));
+  return { status: "submitted-for-review", ...data.proposal };
+}
+
 function parseCli(argv) {
   const [command, ...rest] = argv;
   const flags = {};
@@ -435,8 +569,44 @@ async function main() {
     result = await restorePlan(flags.transaction, options);
   } else if (command === "status") {
     result = await readStatus(options);
+  } else if (command === "catalog") {
+    result = await catalogThemes({ endpoint: flags.endpoint, query: flags.query ?? "" });
+  } else if (command === "fetch") {
+    if (!flags.theme || !flags.output) throw new Error("--theme and --output are required");
+    result = await fetchThemeManifest(flags.theme, flags.output, { endpoint: flags.endpoint });
+  } else if (command === "create") {
+    for (const required of ["id", "name", "author", "surface", "ink", "accent", "output"]) {
+      if (!flags[required]) throw new Error(`--${required} is required`);
+    }
+    const manifest = createLocalManifest({
+      id: flags.id,
+      name: flags.name,
+      author: flags.author,
+      surface: flags.surface,
+      ink: flags.ink,
+      accent: flags.accent,
+      mode: flags.mode ?? "dark",
+    });
+    const outputPath = path.resolve(flags.output);
+    await mkdir(path.dirname(outputPath), { recursive: true });
+    await writeFile(outputPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+    result = { status: "created", themeId: manifest.id, manifestPath: outputPath };
+  } else if (command === "submit") {
+    for (const required of ["name", "author", "platform", "palette", "preview", "consent"]) {
+      if (!flags[required]) throw new Error(`--${required} is required`);
+    }
+    result = await submitThemeProposal({
+      name: flags.name,
+      author: flags.author,
+      platform: flags.platform,
+      palette: flags.palette,
+      previewPath: flags.preview,
+      notes: flags.notes ?? "",
+      consent: flags.consent,
+      endpoint: flags.endpoint,
+    });
   } else {
-    throw new Error("command must be validate, plan, stage, copy, confirm, restore, or status");
+    throw new Error("command must be catalog, fetch, create, validate, plan, stage, copy, confirm, restore, status, or submit");
   }
 
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);

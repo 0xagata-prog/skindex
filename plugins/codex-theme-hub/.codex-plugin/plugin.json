@@ -1,24 +1,26 @@
 {
   "name": "codex-theme-hub",
-  "version": "0.1.0",
-  "description": "Discover, stage, switch, and restore verified Codex themes through a conversational workflow.",
+  "version": "0.2.0",
+  "description": "Discover, create, switch, submit, and restore Codex themes through a conversational workflow.",
   "author": {
     "name": "Codex Theme Hub Contributors",
     "url": "https://codex-theme-hub-cn.jyyang040703.chatgpt.site/"
   },
   "homepage": "https://codex-theme-hub-cn.jyyang040703.chatgpt.site/",
-  "keywords": ["codex", "themes", "appearance", "rollback"],
+  "keywords": ["codex", "themes", "appearance", "image", "rollback"],
   "skills": "./skills/",
   "interface": {
     "displayName": "Codex Theme Hub",
-    "shortDescription": "Install verified Codex themes with recovery built in.",
-    "longDescription": "Use natural language to validate, stage, install, switch, and restore themes from the Codex Theme Hub catalog. Theme packages stay in managed storage instead of the browser Downloads folder.",
+    "shortDescription": "Discover, create and switch Codex themes by chatting.",
+    "longDescription": "Use natural language to discover themes from the live Codex Theme Hub catalog, turn reference images into original theme concepts, install data-only themes with a restore point, and submit generated work only after explicit consent.",
     "developerName": "Codex Theme Hub Contributors",
     "category": "Productivity",
     "capabilities": ["Interactive", "Write"],
     "websiteURL": "https://codex-theme-hub-cn.jyyang040703.chatgpt.site/",
     "defaultPrompt": [
       "安装并应用我在 Codex Theme Hub 选择的主题。",
+      "参考我发的图片，生成一个原创 Codex 主题。",
+      "把生成的主题提交到 Theme Hub，上传前先向我确认。",
       "把 Codex 换成一个低眩光深色主题。",
       "恢复到我上一个使用的 Codex 主题。"
     ]

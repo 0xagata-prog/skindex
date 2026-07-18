@@ -2,9 +2,9 @@ Goal:
 Build and publish Codex Theme Hub: a real theme gallery whose long-term primary action is “use in Codex” through one conversational, reversible workflow.
 
 Current state:
-The public site is https://codex-theme-hub-cn.jyyang040703.chatgpt.site with D1-backed `/api/themes`, `/api/submissions`, and public access without a ChatGPT gate. The current source is prepared to add a fourteenth catalog record, `Blue Messenger 2007`, as the first Theme Hub Lab reference-image experiment. Its preview uses an original blue retro desktop layout and assistant robot plus two restrained QQ penguin fan elements requested by the user; the catalog explicitly labels it an unofficial fan concept and credits ownership of the penguin to Tencent. The currently importable payload is the original ice-blue `codex-theme-v1` palette, not the full three-column layout or characters.
+The public site is https://codex-theme-hub-cn.jyyang040703.chatgpt.site with a 14-theme D1 catalog and public access without a ChatGPT gate. The current source adds a first-class plugin/Skill section, a downloadable development preview bundle, `$theme-hub` conversation deep links, a live per-theme Manifest response through `/api/themes?format=manifest&id=...`, and `/api/theme-proposals` for consent-gated generated-theme submissions. D1 stores proposal metadata and the new `THEME_ASSETS` R2 binding stores preview bytes. Pending previews are not exposed publicly.
 
-The repo now also contains the framework approved after the App Manager/download UX review: `Theme Manifest v1`, a repo-scoped `codex-theme-hub` Marketplace and plugin, a deep-link request protocol, and a deterministic native adapter. The native adapter validates data-only manifests, rejects executable or unknown fields, checks OS compatibility, stores themes under a managed Theme Hub directory rather than Downloads, stages transactions, records the previous confirmed theme, prepares the exact `codex-theme-v1` payload, and resolves rollback plans. The plugin skill makes the user-confirmation boundary explicit because current official Codex deep links prefill but do not auto-send or import appearance payloads.
+The plugin is now v0.2.0. Its `$theme-hub` Skill can query the live catalog, fetch official manifests, create a local data-only theme from generated colors, stage and restore native themes, and submit a generated preview only after explicit `--consent yes`. The website is the data/discovery layer; the plugin is the installable distribution bundle; the Skill is the conversational execution layer. Current official Codex behavior still requires the user to confirm the final Appearance import.
 
 Files touched or relevant:
 README.md
@@ -23,17 +23,24 @@ tests/theme-hub-adapter.test.mjs
 package.json
 app/page.tsx
 app/globals.css
+app/api/theme-proposals/route.ts
+app/api/themes/route.ts
+db/schema.ts
+drizzle/0001_lyrical_blockbuster.sql
+lib/theme-manifest.ts
 lib/theme-seed.ts
 public/themes/blue-messenger-2007.png
+public/downloads/codex-theme-hub-plugin.zip
+storage.ts
 
 Important decisions:
-The website is the discovery layer; the Codex plugin is the execution layer. App Manager is not part of the user-facing product. `codex-theme-v1` is the only active v0.1 adapter. `.codexskin` and Codex Styler formats are recognized but deliberately unavailable until their runtimes can be hidden behind trusted, reversible adapters. Manifests are declarative and cannot include commands, scripts, hooks, executable paths, non-HTTPS package URLs, or remote packages without SHA-256. Theme Hub Lab may turn user references into previews, but third-party IP must be labeled as unofficial fan work and kept separate from the original importable payload. Do not switch the production card action to the Codex deep link until a public/reachable Theme Hub Marketplace and per-theme manifest endpoint exist.
+Users install the plugin, not a loose skill folder. The plugin bundles `$theme-hub`; the site can ship a development preview archive now, while a true public one-click install requires Plugins Directory review. Theme generation is local by default. Uploading a preview is a separate open-world action that requires an explicit disclosure and yes; it creates a private pending proposal, never an immediate public theme. App Manager remains out of the user-facing product.
 
 Verification:
-Plugin validation passed. Skill validation passed. JSON and YAML metadata parse successfully. `npm run test:theme-hub` passes 7 tests covering validation of every bundled catalog manifest, executable/unknown-field rejection, OS compatibility, managed staging, confirmation, previous-theme rollback, and official-default fallback. `npm run lint` and `npm run build` pass. The sample manifest also passes the CLI `validate` and `plan` commands.
+Skill Creator validation passes. `npm run test:theme-hub` passes 10 tests covering the previous adapter safety cases plus generated-manifest creation, catalog query behavior, and refusal to upload without explicit consent. `npm run lint` and `npm run build` pass with `/api/theme-proposals` included. The R2-backed production submission path still needs a post-deployment smoke test.
 
 What to do next:
-Add a per-theme Manifest API generated from the real D1 catalog and include SHA-256 for remote packages. Decide the public GitHub repository/Marketplace identity, publish it, and test first-time installation in a fresh Codex task. Then change the website card action to `codex://new?prompt=<encoded plugin mention + theme_hub_request>` with the existing download/copy flow as fallback. After that, implement and cross-platform test internal `.codexskin` and Styler adapters.
+Deploy the current source and verify that Sites provisions the `THEME_ASSETS` R2 binding and applies migration 0001. Smoke-test one consented proposal with a disposable preview, then remove or mark the fixture. Test the downloaded plugin bundle in a fresh Codex task. Prepare privacy, terms, support, listing assets, five positive tests, and three negative tests for a skills-only public plugin submission.
 
 Known risks:
-There is no documented direct Codex appearance-import deep link, so native v0.1 still requires the user to paste and confirm inside Appearance settings. The adapter records Theme Hub state but cannot independently verify the Codex UI state; it waits for user confirmation before marking a transaction active. The repo Marketplace is local development infrastructure, not yet a public Marketplace known to users. The plugin has not been installed into the current app or tested in a fresh task. The QQ penguin in the Blue Messenger preview is third-party fan-use IP and may need removal or formal permission if the project becomes commercial or receives a rights complaint; the importable palette itself remains original. Anonymous submissions, stale GitHub metadata, and preview hotlink risks from the deployed site remain unchanged.
+There is no documented direct Codex appearance-import deep link, so native import still requires user confirmation. The plugin archive is a development distribution, not a public Marketplace listing; the website must not call it true one-click installation. Anonymous proposal upload needs rate limiting and reviewer tooling before broad promotion. The QQ penguin fan preview remains third-party IP risk. Remote `.codexskin` and Styler adapters remain unavailable.
