@@ -1,0 +1,1 @@
+CREATE INDEX `theme_revisions_theme_idx` ON `theme_revisions` (`theme_id`,`created_at`);

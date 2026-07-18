@@ -150,6 +150,38 @@ test("protects the owner-only review surface on every server boundary", async ()
   assert.match(publicPreview, /eq\(themeProposals\.status, APPROVED_THEME_STATUS\)/);
 });
 
+test("manages published themes with owner-only revisions and reversible unpublishing", async () => {
+  const [reviewPage, themesPage, manager, adminRoute, previewRoute, publicPreview, schema, seed, store] = await Promise.all([
+    source("../app/review/page.tsx"),
+    source("../app/review/themes/page.tsx"),
+    source("../app/review/themes/theme-manager.tsx"),
+    source("../app/api/review/themes/[id]/route.ts"),
+    source("../app/api/review/themes/[id]/preview/route.ts"),
+    source("../app/api/themes/[id]/previews/[asset]/route.ts"),
+    source("../db/schema.ts"),
+    source("../lib/theme-seed.ts"),
+    source("../lib/theme-admin-store.ts"),
+  ]);
+  assert.match(reviewPage, /href="\/review\/themes"/);
+  assert.match(themesPage, /requireChatGPTUser\("\/review\/themes"\)/);
+  assert.match(themesPage, /isConfiguredReviewer\(user\)/);
+  assert.match(themesPage, /\.limit\(pageSize\)\.offset/);
+  assert.match(manager, /编辑主题资料/);
+  assert.match(manager, /替换预览图/);
+  assert.match(manager, /版本历史/);
+  assert.match(adminRoute, /getAuthorizedReviewer\(\)/);
+  assert.match(adminRoute, /跨站主题管理请求已拒绝/);
+  assert.match(adminRoute, /action: `restore:\$\{revision\.id\}`/);
+  assert.match(previewRoute, /inspectImageUpload/);
+  assert.match(previewRoute, /validateThemePreviewDimensions/);
+  assert.match(publicPreview, /max-age=31536000, immutable/);
+  assert.match(schema, /themeRevisions/);
+  assert.match(store, /INSERT INTO theme_revisions/);
+  assert.match(store, /theme_override:/);
+  assert.match(seed, /WHERE NOT EXISTS \(\s*SELECT 1 FROM catalog_meta WHERE key = 'theme_override:'/);
+  assert.doesNotMatch(adminRoute, /DELETE FROM themes|\.delete\(themes\)/);
+});
+
 test("publishes SkinDex through a narrow Vercel proxy while Sites keeps the backend", async () => {
   const [proxy, page, skill, trustedOrigin] = await Promise.all([
     source("../vercel-proxy/vercel.json"),

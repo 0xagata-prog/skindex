@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const themes = sqliteTable("themes", {
   id: text("id").primaryKey(),
@@ -50,3 +50,12 @@ export const themeProposals = sqliteTable("theme_proposals", {
   status: text("status").notNull().default("pending"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
+
+export const themeRevisions = sqliteTable("theme_revisions", {
+  id: text("id").primaryKey(),
+  themeId: text("theme_id").notNull(),
+  action: text("action").notNull(),
+  snapshot: text("snapshot").notNull(),
+  editorEmail: text("editor_email").notNull(),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [index("theme_revisions_theme_idx").on(table.themeId, table.createdAt)]);

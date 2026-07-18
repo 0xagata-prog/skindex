@@ -49,7 +49,7 @@ export default async function ReviewPage() {
     <main className="review-shell">
       <header className="review-topbar">
         <Link className="review-brand" href="/"><span>S</span>SkinDex</Link>
-        <nav><span>{user.displayName}</span><a href={chatGPTSignOutPath("/")}>退出审核账号</a></nav>
+        <nav><Link className="active" href="/review">投稿审核</Link><Link href="/review/themes">已上架主题</Link><span>{user.displayName}</span><a href={chatGPTSignOutPath("/")}>退出</a></nav>
       </header>
 
       <section className="review-hero">

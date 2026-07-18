@@ -383,6 +383,15 @@ async function setupThemeData() {
       value TEXT NOT NULL,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP NOT NULL
     )`),
+    d1.prepare(`CREATE TABLE IF NOT EXISTS theme_revisions (
+      id TEXT PRIMARY KEY NOT NULL,
+      theme_id TEXT NOT NULL,
+      action TEXT NOT NULL,
+      snapshot TEXT NOT NULL,
+      editor_email TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP NOT NULL
+    )`),
+    d1.prepare("CREATE INDEX IF NOT EXISTS theme_revisions_theme_idx ON theme_revisions (theme_id, created_at)"),
   ]);
 
   const currentSeed = await d1.prepare("SELECT value FROM catalog_meta WHERE key = 'seed_version'").first<{ value: string }>();
@@ -411,7 +420,10 @@ async function setupThemeData() {
     license = excluded.license,
     verified_version = excluded.verified_version,
     featured = excluded.featured,
-    updated_at = excluded.updated_at`).bind(
+    updated_at = excluded.updated_at
+  WHERE NOT EXISTS (
+    SELECT 1 FROM catalog_meta WHERE key = 'theme_override:' || excluded.id
+  )`).bind(
       theme.id,
       theme.name,
       theme.author,

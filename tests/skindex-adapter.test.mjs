@@ -7,6 +7,7 @@ import { inspectImageUpload, matchesImageSignature } from "../lib/image-security
 import { getThemeInstallability } from "../lib/theme-capability.ts";
 import { isTrustedBrowserOrigin } from "../lib/trusted-origin.ts";
 import { getThemePagination, THEME_CATALOG_PAGE_SIZE } from "../lib/theme-pagination.ts";
+import { parseThemeAdminPayload } from "../lib/theme-admin.ts";
 import {
   normalizeCatalogDescription,
   normalizeCatalogTags,
@@ -173,6 +174,33 @@ test("normalizes every future catalog card to the publishing standard", () => {
   assert.deepEqual(normalizeCatalogTags(["精选", "精选", "超长标签名称需要被安全截断", "桌面端", "浅色", "额外"]), ["精选", "超长标签名称需要被安全截断", "桌面端", "浅色"]);
   assert.equal(validateThemePreviewDimensions(1600, 900), null);
   assert.match(validateThemePreviewDimensions(600, 900), /横向构图|至少需要/);
+});
+
+test("validates owner theme edits before writing revision history", () => {
+  const valid = {
+    name: "Merchant Theme",
+    author: "Theme Studio",
+    authorUrl: "https://example.com/author",
+    platform: "桌面端",
+    mode: "深色",
+    description: "A traceable commercial theme that follows the catalog standard.",
+    tags: ["商家主题", "深色"],
+    palette: ["#111111", "#EEEEEE", "#635BFF"],
+    previewUrl: "https://example.com/preview.webp",
+    sourceUrl: "https://example.com/source",
+    downloadUrl: "https://example.com/download",
+    sourceName: "Theme Studio",
+    sourceRepo: "studio/merchant-theme",
+    stars: 12,
+    license: "Commercial",
+    verifiedVersion: "reviewed-v1",
+    featured: false,
+    status: "approved",
+  };
+  assert.equal(parseThemeAdminPayload(valid).ok, true);
+  assert.deepEqual(parseThemeAdminPayload({ ...valid, status: "deleted" }), { ok: false, error: "平台、模式或上架状态无效" });
+  assert.equal(parseThemeAdminPayload({ ...valid, tags: ["1", "2", "3", "4", "5"] }).ok, false);
+  assert.equal(parseThemeAdminPayload({ ...valid, previewUrl: "javascript:alert(1)" }).ok, false);
 });
 
 test("classifies catalog actions by verified adapter support", () => {
