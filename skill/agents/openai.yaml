@@ -1,4 +1,4 @@
 interface:
   display_name: "SkinDex"
   short_description: "Codex 口袋皮肤图鉴：发现、生成、切换并投稿主题"
-  default_prompt: "使用 $theme-hub 从官网推荐一个主题，或根据我发的图片生成一个新主题。"
+  default_prompt: "使用 $skindex 从官网推荐一个主题，或根据我发的图片生成一个新主题。"

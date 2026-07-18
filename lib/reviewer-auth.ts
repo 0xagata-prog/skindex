@@ -2,11 +2,13 @@ import { env } from "cloudflare:workers";
 import { getChatGPTUser, type ChatGPTUser } from "../app/chatgpt-auth";
 
 type ReviewerEnvironment = {
+  SKINDEX_REVIEWER_EMAIL?: string;
   THEME_HUB_REVIEWER_EMAIL?: string;
 };
 
 function configuredReviewerEmail() {
-  return ((env as unknown as ReviewerEnvironment).THEME_HUB_REVIEWER_EMAIL ?? "")
+  const reviewerEnv = env as unknown as ReviewerEnvironment;
+  return (reviewerEnv.SKINDEX_REVIEWER_EMAIL ?? reviewerEnv.THEME_HUB_REVIEWER_EMAIL ?? "")
     .trim()
     .toLowerCase();
 }

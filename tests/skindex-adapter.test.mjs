@@ -16,9 +16,9 @@ import {
   stageManifest,
   submitThemeProposal,
   validateManifest,
-} from "../plugins/codex-theme-hub/skills/theme-hub/scripts/theme-hub.mjs";
+} from "../skill/scripts/skindex.mjs";
 
-const samplePath = new URL("../plugins/codex-theme-hub/catalog/chalkboard-green.json", import.meta.url);
+const samplePath = new URL("../catalog/chalkboard-green.json", import.meta.url);
 
 async function sampleManifest() {
   return JSON.parse(await readFile(samplePath, "utf8"));
@@ -27,7 +27,7 @@ async function sampleManifest() {
 test("validates and plans a native data-only theme", async () => {
   const manifest = await sampleManifest();
   assert.deepEqual(validateManifest(manifest), { ok: true, errors: [], warnings: [] });
-  const plan = planManifest(manifest, { stateRoot: "/tmp/theme-hub-test", platform: "darwin" });
+  const plan = planManifest(manifest, { stateRoot: "/tmp/skindex-test", platform: "darwin" });
   assert.equal(plan.status, "ready");
   assert.equal(plan.adapter, "codex-native-v1");
   assert.equal(plan.currentOs, "macos");
@@ -35,7 +35,7 @@ test("validates and plans a native data-only theme", async () => {
 });
 
 test("validates every bundled SkinDex catalog manifest", async () => {
-  const catalogUrl = new URL("../plugins/codex-theme-hub/catalog/", import.meta.url);
+  const catalogUrl = new URL("../catalog/", import.meta.url);
   const manifests = (await readdir(catalogUrl)).filter((name) => name.endsWith(".json"));
   assert.ok(manifests.length >= 2);
   for (const filename of manifests) {
@@ -63,13 +63,13 @@ test("rejects fields outside the v1 schema", async () => {
 test("reports operating-system incompatibility before staging", async () => {
   const manifest = await sampleManifest();
   manifest.compatibility.os = ["windows"];
-  const plan = planManifest(manifest, { stateRoot: "/tmp/theme-hub-test", platform: "darwin" });
+  const plan = planManifest(manifest, { stateRoot: "/tmp/skindex-test", platform: "darwin" });
   assert.equal(plan.status, "incompatible");
   assert.equal(plan.compatible, false);
 });
 
 test("stages, confirms, and resolves a restore point in managed storage", async () => {
-  const stateRoot = await mkdtemp(path.join(tmpdir(), "codex-theme-hub-test-"));
+  const stateRoot = await mkdtemp(path.join(tmpdir(), "skindex-test-"));
   const first = await sampleManifest();
   const firstStage = await stageManifest(first, { stateRoot });
   assert.equal(firstStage.status, "ready-for-confirmation");
@@ -92,7 +92,7 @@ test("stages, confirms, and resolves a restore point in managed storage", async 
 });
 
 test("uses the official default when no prior SkinDex theme exists", async () => {
-  const stateRoot = await mkdtemp(path.join(tmpdir(), "codex-theme-hub-test-"));
+  const stateRoot = await mkdtemp(path.join(tmpdir(), "skindex-test-"));
   const staged = await stageManifest(await sampleManifest(), { stateRoot });
   const restore = await restorePlan(staged.transactionId, { stateRoot });
   assert.equal(restore.nextAction, "select-codex-default");
@@ -133,7 +133,7 @@ test("classifies catalog actions by verified adapter support", () => {
     requiresUserConfirmation: true,
     rollback: "restore-point",
   });
-  assert.equal(getThemeInstallability({ sourceRepo: "theme-hub/lab", verifiedVersion: "codex-theme-v1" }).supportLevel, "partial");
+  assert.equal(getThemeInstallability({ sourceRepo: "skindex/lab", verifiedVersion: "codex-theme-v1" }).supportLevel, "partial");
   assert.equal(getThemeInstallability({ sourceRepo: "Wangnov/awesome-codex-skins", verifiedVersion: "codexskin-v1" }).action, "view-source");
 });
 
@@ -158,7 +158,7 @@ test("verifies declared image types by file signature", () => {
 });
 
 test("marks consented proposal requests as SkinDex Skill traffic", async () => {
-  const stateRoot = await mkdtemp(path.join(tmpdir(), "theme-hub-submit-test-"));
+  const stateRoot = await mkdtemp(path.join(tmpdir(), "skindex-submit-test-"));
   const previewPath = path.join(stateRoot, "preview.png");
   await writeFile(previewPath, Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
   let clientHeader = "";
@@ -170,11 +170,11 @@ test("marks consented proposal requests as SkinDex Skill traffic", async () => {
     previewPath,
     consent: "yes",
     fetchImpl: async (_url, init) => {
-      clientHeader = init.headers["X-Theme-Hub-Client"];
+      clientHeader = init.headers["X-SkinDex-Client"];
       return Response.json({ proposal: { id: "proposal-id", status: "pending" } }, { status: 201 });
     },
   });
-  assert.equal(clientHeader, "theme-hub-skill-v1");
+  assert.equal(clientHeader, "skindex-skill-v1");
   assert.equal(result.status, "pending");
   assert.equal(result.public, false);
   assert.equal(result.publication, "review-required");

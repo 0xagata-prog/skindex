@@ -40,7 +40,7 @@ export const seedThemes: SeedTheme[] = [
     sourceUrl: "https://codex-theme-hub-cn.jyyang040703.chatgpt.site/#themes",
     downloadUrl: "https://codex-theme-hub-cn.jyyang040703.chatgpt.site/#themes",
     sourceName: "SkinDex Lab",
-    sourceRepo: "theme-hub/lab",
+    sourceRepo: "skindex/lab",
     stars: 0,
     license: "非官方同人概念 · QQ 企鹅归腾讯所有",
     verifiedVersion: "概念预览 · codex-theme-v1",

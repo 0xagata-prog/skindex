@@ -31,9 +31,9 @@ export async function POST(request: Request) {
   try {
     const requestOrigin = new URL(request.url).origin;
     const origin = request.headers.get("origin");
-    const skillClient = request.headers.get("x-theme-hub-client");
+    const skillClient = request.headers.get("x-skindex-client");
     const sameOriginBrowser = origin === requestOrigin;
-    const trustedSkillClient = !origin && skillClient === "theme-hub-skill-v1";
+    const trustedSkillClient = !origin && skillClient === "skindex-skill-v1";
     if (!sameOriginBrowser && !trustedSkillClient) {
       return Response.json({ error: "投稿客户端无法验证" }, { status: 403 });
     }

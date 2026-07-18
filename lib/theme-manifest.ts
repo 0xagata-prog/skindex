@@ -55,14 +55,14 @@ export function buildNativeThemePayload(theme: Pick<NativeThemeInput, "id" | "mo
 export function buildThemeManifest(theme: NativeThemeInput, origin: string) {
   const previewUrl = new URL(theme.previewUrl, origin).toString();
   return {
-    schemaVersion: "theme-hub/v1",
+    schemaVersion: "skindex/v1",
     id: theme.id,
     name: theme.name,
     summary: theme.description,
     author: { name: theme.author, url: theme.authorUrl },
     source: {
       repository: theme.sourceUrl,
-      revision: `theme-hub-catalog@${theme.updatedAt}`,
+      revision: `skindex-catalog@${theme.updatedAt}`,
       license: theme.license,
     },
     compatibility: {
@@ -77,7 +77,7 @@ export function buildThemeManifest(theme: NativeThemeInput, origin: string) {
     install: {
       adapter: "codex-native-v1",
       experience: "guided-import",
-      supportLevel: theme.sourceRepo === "theme-hub/lab" ? "partial" : "native",
+      supportLevel: ["skindex/lab", "theme-hub/lab"].includes(theme.sourceRepo ?? "") ? "partial" : "native",
       requiresUserConfirmation: true,
       rollback: "restore-point",
     },

@@ -60,29 +60,26 @@ type InstallGuide = {
 
 const filters = ["全部", "桌面端", "CLI", "深色", "浅色", "双模式"] as const;
 
-const githubRepoUrl = "https://github.com/0xagata-prog/codex-theme-hub";
-const skillBundleUrl = `${githubRepoUrl}/releases/latest/download/theme-hub-skill.zip`;
-const themeHubOrigin = "https://codex-theme-hub-cn.jyyang040703.chatgpt.site";
+const githubRepoUrl = "https://github.com/0xagata-prog/skindex";
+const skillSourceUrl = `${githubRepoUrl}/tree/main/skill`;
+const skindexOrigin = "https://codex-theme-hub-cn.jyyang040703.chatgpt.site";
 const SKINDEX_SKILL_READY_KEY = "skindex-skill-ready-v1";
+const SKINDEX_SAVED_KEY = "skindex-saved-v1";
 
 function codexPromptUrl(prompt: string) {
   return `codex://new?prompt=${encodeURIComponent(prompt)}`;
 }
 
 function skillChatUrl(prompt: string) {
-  return codexPromptUrl(`先检查当前已安装技能列表中是否存在 theme-hub（显示名可能是 SkinDex）。
+  return codexPromptUrl(`先检查当前已安装技能列表中是否存在 skindex（显示名 SkinDex）。
 若不存在，立即停止：不要读取项目文件，不要搜索网页，不要请求 Manifest，不要创建恢复点，也不要尝试自行兼容。只回复“尚未安装 SkinDex，请先回官网完成安装，并在安装后开启新对话”。
-只有确认 theme-hub 已安装时，才调用 $theme-hub 执行以下请求：
+只有确认 skindex 已安装时，才调用 $skindex 执行以下请求：
 ${prompt}`);
 }
 
 function skillInstallerChatUrl() {
-  return codexPromptUrl(`请帮我安装官方 SkinDex Skill（兼容命令为 $theme-hub）。
-唯一可信来源：${githubRepoUrl}
-最新安装包：${skillBundleUrl}
-目标目录：macOS / Linux 使用 $HOME/.agents/skills/theme-hub；Windows 使用 %USERPROFILE%\\.agents\\skills\\theme-hub。
-这是用户级 Skill 安装，当前项目目录为空也不影响安装；不要搜索项目交接文件，也不要读取任何主题 Manifest。
-安装前请先检查来源、压缩包结构和 SKILL.md；如果目标目录已存在，先比较版本并说明如何备份。告诉我将写入哪些文件，等待我确认后再安装。不要执行主题包里的任何命令。完成后验证 Skill 结构，并明确回复“安装完成，请开启新对话后再使用 $theme-hub”。`);
+  return codexPromptUrl(`$skill-installer
+请从 ${skillSourceUrl} 安装官方 SkinDex Skill，并将它安装为 skindex。安装完成后告诉我：开启新对话并使用 $skindex。`);
 }
 
 function themeUseChatUrl(theme: Theme) {
@@ -90,10 +87,10 @@ function themeUseChatUrl(theme: Theme) {
     version: "1",
     action: "install",
     themeId: theme.id,
-    manifestUrl: `${themeHubOrigin}/api/themes?format=manifest&id=${encodeURIComponent(theme.id)}`,
+    manifestUrl: `${skindexOrigin}/api/themes?format=manifest&id=${encodeURIComponent(theme.id)}`,
   });
   return skillChatUrl(`请使用官网主题“${theme.name}”。
-theme_hub_request=${request}
+skindex_request=${request}
 先验证 Manifest、来源、兼容性与适配器，再创建恢复点并暂存。最终导入必须等待我在 Codex 外观设置中确认；失败时不要改变当前主题。`);
 }
 
@@ -249,12 +246,12 @@ export default function Home() {
   useEffect(() => {
     const task = window.setTimeout(() => {
       try {
-        const stored = window.localStorage.getItem("codex-theme-hub-saved");
+        const stored = window.localStorage.getItem(SKINDEX_SAVED_KEY);
         const parsed = stored ? JSON.parse(stored) : [];
         setSaved(Array.isArray(parsed) ? parsed.map(String) : []);
         setSkillReady(window.localStorage.getItem(SKINDEX_SKILL_READY_KEY) === "confirmed");
       } catch {
-        window.localStorage.removeItem("codex-theme-hub-saved");
+        window.localStorage.removeItem(SKINDEX_SAVED_KEY);
       }
     }, 0);
     return () => window.clearTimeout(task);
@@ -299,7 +296,7 @@ export default function Home() {
   const toggleSaved = (id: string) => {
     setSaved((current) => {
       const next = current.includes(id) ? current.filter((item) => item !== id) : [...current, id];
-      window.localStorage.setItem("codex-theme-hub-saved", JSON.stringify(next));
+      window.localStorage.setItem(SKINDEX_SAVED_KEY, JSON.stringify(next));
       return next;
     });
   };
@@ -392,7 +389,7 @@ export default function Home() {
         <div className="hero-copy">
           <div className="hero-label"><span>LIVE CATALOG</span><i>●</i> 公开来源 · 持久数据</div>
           <h1>真实主题，<br /><em>真实来源。</em></h1>
-          <p>SkinDex 是你的 Codex 口袋皮肤图鉴：官网负责发现和创作，兼容命令 <b>$theme-hub</b> 的 Skill 负责在 Codex 里对话切换。</p>
+          <p>SkinDex 是你的 Codex 口袋皮肤图鉴：官网负责发现和创作，<b>$skindex</b> Skill 负责在 Codex 里对话切换。</p>
           <div className="hero-actions">
             <button onClick={() => setSkillInstallOpen(true)}>在 Codex 中安装 SkinDex <span>→</span></button>
             <a href="#themes">先浏览主题 ↓</a>
@@ -428,7 +425,7 @@ export default function Home() {
         <div className="skill-intro">
           <span className="section-index">01 / CODEX SKILL</span>
           <h2>装一次，之后直接和主题助手说话。</h2>
-          <p>当前直接安装 <b>$theme-hub</b> Skill：官网是实时数据源，Skill 是对话执行层。插件等正式上架后再开放。</p>
+          <p>当前直接安装 <b>$skindex</b> Skill：官网是实时数据源，Skill 是对话执行层。插件等正式上架后再开放。</p>
           <div className="skill-actions">
             <button onClick={() => setSkillInstallOpen(true)}>在 Codex 中开始安装 →</button>
             <span>只需安装一次 · 以后主题直接从官网打开</span>
@@ -584,23 +581,19 @@ export default function Home() {
             <button className="modal-close" onClick={() => setSkillInstallOpen(false)} aria-label="关闭 Skill 安装说明">×</button>
             <span className="section-index">GUIDED INSTALL · GITHUB VERIFIED</span>
             <h2 id="skill-install-title">安装一次，以后主题直接用</h2>
-            <p>主流程会打开一个 Codex 安装任务：Codex 先检查官方 GitHub 来源、目标目录和现有版本，得到你的确认后才写入。浏览器不会静默安装任何内容。</p>
+            <p>点击后会打开 Codex，并由内置的 Skill Installer 从 SkinDex 官方 GitHub 安装。浏览器不会下载文件，也不会静默修改你的电脑。</p>
             <ol className="install-steps skill-install-steps">
-              <li><span>01</span><p>打开预填好的 Codex 安装任务</p></li>
-              <li><span>02</span><p>检查来源、文件和目标目录后确认</p></li>
-              <li><span>03</span><p>开启新对话，直接使用官网主题</p></li>
+              <li><span>01</span><p>点击“用 Codex 安装”</p></li>
+              <li><span>02</span><p>允许 Skill Installer 完成安装</p></li>
+              <li><span>03</span><p>开启新对话，使用 $skindex</p></li>
             </ol>
-            <div className="skill-paths">
-              <code>~/.agents/skills/theme-hub/SKILL.md</code>
-              <code>%USERPROFILE%\.agents\skills\theme-hub\SKILL.md</code>
-            </div>
             <div className="skill-downloads">
-              <a className="install-primary" href={skillInstallerChatUrl()}>在 Codex 中开始安装 →</a>
-              <a className="install-secondary" href={skillBundleUrl}>手动下载 Skill ↓</a>
+              <a className="install-primary" href={skillInstallerChatUrl()}>用 Codex 安装 →</a>
+              <a className="install-secondary" href={skillSourceUrl} target="_blank" rel="noreferrer">查看 GitHub 源码 ↗</a>
             </div>
             {pendingTheme && <button className="skill-ready-confirm" onClick={() => confirmSkillReady(pendingTheme)}>我已安装：在 Codex 中打开主题 →</button>}
             {skillReady && !pendingTheme && <button className="skill-reset-button" onClick={resetSkillReady}>这台设备找不到 Skill？重新进入安装流程</button>}
-            <p className="install-source">唯一发布源：<a href={githubRepoUrl} target="_blank" rel="noreferrer">GitHub 源码与 Releases ↗</a>。安装后开启新对话，再输入：$theme-hub 帮我从官网挑一个主题。</p>
+            <p className="install-source">唯一发布源：<a href={githubRepoUrl} target="_blank" rel="noreferrer">GitHub ↗</a>。安装后开启新对话，输入：$skindex 帮我从官网挑一个主题。</p>
           </section>
         </div>
       )}

@@ -125,7 +125,7 @@ export function validateManifest(manifest) {
   rejectUnknownKeys(manifest.package?.integrity, new Set(["algorithm", "value"]), "package.integrity", errors);
   rejectUnknownKeys(manifest.install, new Set(["adapter", "experience", "supportLevel", "requiresUserConfirmation", "rollback"]), "install", errors);
 
-  if (manifest.schemaVersion !== "theme-hub/v1") errors.push("schemaVersion must be theme-hub/v1");
+  if (manifest.schemaVersion !== "skindex/v1") errors.push("schemaVersion must be skindex/v1");
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(manifest.id ?? "")) errors.push("id must be lowercase kebab-case");
   if (typeof manifest.name !== "string" || !manifest.name.trim()) errors.push("name is required");
   if (typeof manifest.summary !== "string" || !manifest.summary.trim()) errors.push("summary is required");
@@ -199,12 +199,12 @@ export function validateManifest(manifest) {
 }
 
 export function stateRootFromEnvironment({ platform = process.platform, env = process.env, home = homedir() } = {}) {
-  if (env.CODEX_THEME_HUB_HOME) return path.resolve(env.CODEX_THEME_HUB_HOME);
+  if (env.SKINDEX_HOME) return path.resolve(env.SKINDEX_HOME);
   if (platform === "win32") {
     if (!env.LOCALAPPDATA) throw new Error("LOCALAPPDATA is required on Windows");
-    return path.join(env.LOCALAPPDATA, "CodexThemeHub");
+    return path.join(env.LOCALAPPDATA, "SkinDex");
   }
-  return path.join(home, ".codex-theme-hub");
+  return path.join(home, ".skindex");
 }
 
 async function loadManifest(manifestPath) {
@@ -275,12 +275,12 @@ export async function stageManifest(manifest, { stateRoot = stateRootFromEnviron
   const transactionPath = path.join(stateRoot, "transactions", `${transactionId}.json`);
 
   const state = await readJsonOrDefault(statePath, {
-    schemaVersion: "theme-hub-state/v1",
+    schemaVersion: "skindex-state/v1",
     active: null,
     installations: {},
   });
   const transaction = {
-    schemaVersion: "theme-hub-transaction/v1",
+    schemaVersion: "skindex-transaction/v1",
     id: transactionId,
     status: "staged",
     themeId: manifest.id,
@@ -402,7 +402,7 @@ export async function copyTransactionPayload(transactionId, { stateRoot = stateR
 
 export async function readStatus({ stateRoot = stateRootFromEnvironment() } = {}) {
   return readJsonOrDefault(path.join(stateRoot, "state.json"), {
-    schemaVersion: "theme-hub-state/v1",
+    schemaVersion: "skindex-state/v1",
     active: null,
     installations: {},
   });
@@ -472,7 +472,7 @@ export function createLocalManifest({ id, name, author, surface, ink, accent, mo
   if (![surface, ink, accent].every(validHex)) throw new Error("surface, ink, and accent must be six-digit hex colors");
   if (!new Set(["light", "dark"]).has(mode)) throw new Error("mode must be light or dark");
   const manifest = {
-    schemaVersion: "theme-hub/v1",
+    schemaVersion: "skindex/v1",
     id,
     name,
     summary: "Locally generated SkinDex color theme.",
@@ -549,7 +549,7 @@ export async function submitThemeProposal({
   form.set("preview", new Blob([bytes], { type: mime }), path.basename(previewPath));
   const data = await responseJson(await fetchImpl(endpointUrl(endpoint, "/api/theme-proposals"), {
     method: "POST",
-    headers: { "X-Theme-Hub-Client": "theme-hub-skill-v1" },
+    headers: { "X-SkinDex-Client": "skindex-skill-v1" },
     body: form,
   }));
   return {

@@ -19,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const protocol = requestHeaders.get("x-forwarded-proto") ?? (host?.includes("localhost") ? "http" : "https");
   const origin = host ? `${protocol}://${host}` : "https://codex-theme-hub-cn.jyyang040703.chatgpt.site";
   const title = "SkinDex — Codex 口袋皮肤图鉴";
-  const description = "在 SkinDex 发现、收藏和安全导入真实 Codex 社区主题，也可以通过 $theme-hub Skill 生成并投稿自己的皮肤。";
+  const description = "在 SkinDex 发现、收藏和安全导入真实 Codex 社区主题，也可以通过 $skindex Skill 生成并投稿自己的皮肤。";
 
   return {
     title,

@@ -7,7 +7,7 @@ type ThemeCapabilityInput = {
 
 export function getThemeInstallability(theme: ThemeCapabilityInput) {
   if (theme.verifiedVersion.includes("codex-theme-v1")) {
-    const partial = theme.sourceRepo === "theme-hub/lab";
+    const partial = theme.sourceRepo === "skindex/lab" || theme.sourceRepo === "theme-hub/lab";
     return {
       supportLevel: partial ? "partial" as const : "native" as const,
       adapter: "codex-native-v1" as const,

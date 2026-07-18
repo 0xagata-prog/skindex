@@ -94,7 +94,7 @@ export async function POST(request: Request, context: RouteContext) {
         `${requestOrigin}/#themes`,
         `${requestOrigin}/#themes`,
         "SkinDex Community",
-        `theme-hub/community/${proposal.id}`,
+        `skindex/community/${proposal.id}`,
         0,
         "用户投稿 · 权利归投稿者",
         "codex-theme-v1",

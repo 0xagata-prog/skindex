@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "theme-hub/v1",
+  "schemaVersion": "skindex/v1",
   "id": "blue-messenger-2007",
   "name": "蓝色信使 2007 · Blue Messenger 2007",
   "summary": "从用户参考图提炼的冰蓝渐变、三栏工作区与复古桌面软件质感；预览含 QQ 企鹅怀旧同人元素，非腾讯官方产品。",
@@ -9,7 +9,7 @@
   },
   "source": {
     "repository": "https://codex-theme-hub-cn.jyyang040703.chatgpt.site/",
-    "revision": "theme-hub-lab@2026-07-18",
+    "revision": "skindex-lab@2026-07-18",
     "license": "NOASSERTION"
   },
   "compatibility": {

@@ -3,17 +3,17 @@
 ## 产品分工
 
 - 官网是主题数据源：发现、筛选、预览、Manifest API 与审核队列。
-- GitHub 是 Skill 源码和版本的唯一发布源；官网安装入口始终指向 GitHub Release。
-- 当前直接分发 `$theme-hub` Skill；插件源码保留，等公开上架后再作为安装外壳开放。
+- GitHub 是 Skill 源码和版本的唯一发布源；官网安装入口调用 Codex 内置 `$skill-installer` 读取 GitHub 的 `skill/` 目录。
+- 当前直接分发 `$skindex` Skill；插件等公开上架后再开放。
 - Skill 是对话入口：推荐官网主题、生成新主题、安装切换、恢复，以及经确认提交审核。
 - 适配器负责把统一 Manifest 转成安全、可恢复的 Codex 外观操作。
 
 ## 两次一键
 
-- 首次安装：主题按钮先显示安装门槛。用户选择“还没安装”后，官网只打开 Codex 引导式安装任务；Codex 核验 GitHub 来源、目标目录和现有版本，等待确认后安装 Skill。GitHub ZIP 是手动备用入口。
+- 首次安装：主题按钮先显示安装门槛。用户选择“还没安装”后，官网打开 Codex，并由内置 `$skill-installer` 从官方 GitHub `skill/` 目录安装。
 - 安装确认：安装后必须开启新对话。用户回到官网并明确选择“我已安装”，网站只在当前设备记录这次自我确认；它不能读取本地技能列表。
-- 日常换肤：已确认安装的设备才会从主题卡打开带 `theme_hub_request` 的 Codex 任务；Skill 获取 Manifest、验证、创建恢复点并暂存，用户在外观设置中完成最终确认。
-- 失败保护：任何 SkinDex 深链都先要求检查 `theme-hub` 是否已安装。缺失时立即停止，不读取项目、不搜索网页、不请求 Manifest，也不创建恢复点。
+- 日常换肤：已确认安装的设备才会从主题卡打开带 `skindex_request` 的 Codex 任务；Skill 获取 Manifest、验证、创建恢复点并暂存，用户在外观设置中完成最终确认。
+- 失败保护：任何 SkinDex 深链都先要求检查 `skindex` 是否已安装。缺失时立即停止，不读取项目、不搜索网页、不请求 Manifest，也不创建恢复点。
 - 浏览器永远不静默写入 Skill 目录，也不静默修改 Codex 外观。
 
 ## 支持等级
@@ -28,7 +28,7 @@
 
 ```text
 官网主题卡
-  → 打开 Codex 对话并点名 $theme-hub
+  → 打开 Codex 对话并点名 $skindex
   → Skill 从官网读取 Manifest
   → 校验 + 恢复点 + 用户确认导入
 
@@ -52,7 +52,7 @@
 - `.codexskin` 与 Codex Styler 仍只识别格式，不自动执行。
 - Codex 没有公开的外观自动导入深链，最终导入仍需用户在 Appearance 中确认。
 - 插件尚未进入公开 Plugins Directory，官网现在不宣传或分发插件包。
-- 独立 Skill 需要用户把 `theme-hub` 文件夹放进用户 Skill 目录；官网深链只预填对话。
+- 独立 Skill 由 Codex 内置 `$skill-installer` 从 GitHub 安装；官网深链只预填对话。
 - 生成主题绝不默认上传；第一次询问只确认投稿意愿，第二次确认才授权上传。所有投稿固定进入私有 `pending` 队列，只有 `approved` 主题能被公开 API 和官网目录读取。高清预览保留本地，上传审核缩略图限制为 700 KB。
 
 ## 所有者审核

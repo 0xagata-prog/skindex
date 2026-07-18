@@ -4,7 +4,7 @@ SkinDex manifests are declarative data. They describe provenance, compatibility,
 
 `install.experience` may be `guided-import`. `install.supportLevel` is `native`, `partial`, or `adapter-pending`. Treat these as presentation and workflow hints; never let them bypass validation, confirmation, or adapter availability checks.
 
-The canonical JSON Schema is at `../../../schemas/theme-manifest-v1.schema.json` from this reference file. Validate every manifest with `scripts/theme-hub.mjs` because the runtime also enforces adapter-to-format matching and native payload structure.
+The canonical JSON Schema is at `../../schemas/theme-manifest-v1.schema.json` from this reference file. Validate every manifest with `scripts/skindex.mjs` because the runtime also enforces adapter-to-format matching and native payload structure.
 
 ## Supported formats
 
@@ -24,8 +24,8 @@ The canonical JSON Schema is at `../../../schemas/theme-manifest-v1.schema.json`
 
 ## Managed storage
 
-- macOS and Linux: `~/.codex-theme-hub/`
-- Windows: `%LOCALAPPDATA%\CodexThemeHub\`
-- Test override: `--state-root <path>` or `CODEX_THEME_HUB_HOME`
+- macOS and Linux: `~/.skindex/`
+- Windows: `%LOCALAPPDATA%\SkinDex\`
+- Test override: `--state-root <path>` or `SKINDEX_HOME`
 
 Staging does not mean the theme is active. Mark it active only after the user confirms the import succeeded in Codex.

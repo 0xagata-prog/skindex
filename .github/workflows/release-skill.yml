@@ -16,10 +16,10 @@ jobs:
 
       - name: Package standalone Skill
         run: |
-          mkdir -p release/theme-hub
-          cp -R plugins/codex-theme-hub/skills/theme-hub/. release/theme-hub/
+          mkdir -p release/skindex
+          cp -R skill/. release/skindex/
           cd release
-          zip -r ../theme-hub-skill.zip theme-hub
+          zip -r ../skindex-skill.zip skindex
 
       - name: Create or update GitHub Release
         env:
@@ -27,7 +27,7 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           if gh release view "$TAG"; then
-            gh release upload "$TAG" theme-hub-skill.zip --clobber
+            gh release upload "$TAG" skindex-skill.zip --clobber
           else
-            gh release create "$TAG" theme-hub-skill.zip --generate-notes --title "SkinDex Skill $TAG"
+            gh release create "$TAG" skindex-skill.zip --generate-notes --title "SkinDex Skill $TAG"
           fi
