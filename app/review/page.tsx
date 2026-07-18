@@ -37,10 +37,13 @@ export default async function ReviewPage() {
 
   await ensureThemeData();
   const [repoSubmissions, generatedProposals] = await Promise.all([
-    getDb().select().from(submissions).where(eq(submissions.status, PENDING_REVIEW_STATUS)).orderBy(desc(submissions.createdAt)),
-    getDb().select().from(themeProposals).where(eq(themeProposals.status, PENDING_REVIEW_STATUS)).orderBy(desc(themeProposals.createdAt)),
+    getDb().select().from(submissions).where(eq(submissions.status, PENDING_REVIEW_STATUS)).orderBy(desc(submissions.createdAt)).limit(101),
+    getDb().select().from(themeProposals).where(eq(themeProposals.status, PENDING_REVIEW_STATUS)).orderBy(desc(themeProposals.createdAt)).limit(101),
   ]);
-  const total = repoSubmissions.length + generatedProposals.length;
+  const queueCapped = repoSubmissions.length > 100 || generatedProposals.length > 100;
+  const visibleRepoSubmissions = repoSubmissions.slice(0, 100);
+  const visibleGeneratedProposals = generatedProposals.slice(0, 100);
+  const total = visibleRepoSubmissions.length + visibleGeneratedProposals.length;
 
   return (
     <main className="review-shell">
@@ -53,12 +56,13 @@ export default async function ReviewPage() {
         <div><small>OWNER-ONLY REVIEW</small><h1>主题审核台</h1><p>这里只显示尚未处理的投稿。生成主题通过后立即进入公开目录；GitHub 仓库通过后进入编目阶段，不会在资料不完整时自动发布。</p></div>
         <div className="review-count"><strong>{total}</strong><span>待审核</span></div>
       </section>
+      {queueCapped && <p className="review-empty">队列较长：当前仅显示每类最新 100 条，请先处理现有投稿。</p>}
 
       <section className="review-section">
         <div className="review-section-heading"><h2>生成主题</h2><p>通过后立即公开 · 预览仅审核账号可见</p></div>
-        {generatedProposals.length ? (
+        {visibleGeneratedProposals.length ? (
           <div className="review-grid">
-            {generatedProposals.map((proposal) => {
+            {visibleGeneratedProposals.map((proposal) => {
               const palette = parsePalette(proposal.palette);
               return (
                 <article className="review-card" key={proposal.id}>
@@ -79,9 +83,9 @@ export default async function ReviewPage() {
 
       <section className="review-section">
         <div className="review-section-heading"><h2>GitHub 仓库</h2><p>接受后进入人工编目 · 不自动公开</p></div>
-        {repoSubmissions.length ? (
+        {visibleRepoSubmissions.length ? (
           <div className="review-grid">
-            {repoSubmissions.map((submission) => (
+            {visibleRepoSubmissions.map((submission) => (
               <article className="review-card" key={submission.id}>
                 <div className="review-card-body">
                   <div className="review-meta"><span>{submission.platform}</span><span>{submission.createdAt}</span></div>

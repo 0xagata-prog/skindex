@@ -61,7 +61,7 @@ type InstallGuide = {
 const filters = ["全部", "桌面端", "CLI", "深色", "浅色", "双模式"] as const;
 
 const githubRepoUrl = "https://github.com/0xagata-prog/skindex";
-const skillSourceUrl = `${githubRepoUrl}/tree/main/skill`;
+const skillSourceUrl = `${githubRepoUrl}/tree/v0.5.0/skill`;
 const skindexOrigin = "https://codex-skindex.vercel.app";
 const SKINDEX_SKILL_READY_KEY = "skindex-skill-ready-v1";
 const SKINDEX_SAVED_KEY = "skindex-saved-v1";
@@ -475,12 +475,12 @@ export default function Home() {
           <p>公开项目保留原仓库链接；参考图生成主题由 SkinDex Lab 提炼原创预览与可导入配色。</p>
         </div>
         <div className="source-grid">
-          <a href="https://github.com/robinli/codex-material-themes" target="_blank" rel="noreferrer"><span>01</span><h3>Codex Material Themes</h3><p>12 款可通过 codex-theme-v1 导入的材质配色主题。</p><b>打开 GitHub ↗</b></a>
+          <a href="https://github.com/robinli/codex-material-themes" target="_blank" rel="noreferrer"><span>01</span><h3>Codex Material Themes</h3><p>当前目录收录 7 款可通过 codex-theme-v1 导入的材质配色主题。</p><b>打开 GitHub ↗</b></a>
           <a href="https://github.com/xuhuanstudio/codex-styler" target="_blank" rel="noreferrer"><span>02</span><h3>Codex Styler</h3><p>开源主题编辑器、场景皮肤与互动伙伴系统。</p><b>打开 GitHub ↗</b></a>
           <a href="https://github.com/Wangnov/awesome-codex-skins" target="_blank" rel="noreferrer"><span>03</span><h3>Awesome Codex Skins</h3><p>.codexskin 标准、认证注册表和真实应用截图。</p><b>打开 GitHub ↗</b></a>
           <a href="#themes"><span>04</span><h3>SkinDex Lab</h3><p>把用户参考图转化为原创主题概念、预览和可导入配色。</p><b>查看实验主题 ↑</b></a>
         </div>
-        {syncedAt && <p className="sync-note">数据库响应时间：{new Date(syncedAt).toLocaleString("zh-CN")} · 元数据更新以源仓库为准</p>}
+        {syncedAt && <p className="sync-note">数据库响应时间：{new Date(syncedAt).toLocaleString("zh-CN")} · 星标为 2026-07-18 核验快照，最新数据以源仓库为准</p>}
       </section>
 
       <section className="creator-banner" id="creators">
@@ -492,7 +492,7 @@ export default function Home() {
       <footer>
         <a className="brand footer-brand" href="#top"><span>S</span><strong>SkinDex</strong></a>
         <p>公开浏览 · 来源可追溯 · 不强绑 ChatGPT 登录</p>
-        <div><a href="#skill">安装 Skill</a><a href="#sources">数据来源</a><a href="#creators">提交主题</a><a href="#top">回到顶部 ↑</a></div>
+        <div><a href="#skill">安装 Skill</a><a href="#sources">数据来源</a><a href="#creators">提交主题</a><a href="/privacy">隐私</a><a href="/terms">条款</a><a href="/support">支持</a><a href="#top">回到顶部 ↑</a></div>
       </footer>
 
       {selected && (

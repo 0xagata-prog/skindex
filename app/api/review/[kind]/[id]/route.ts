@@ -3,6 +3,9 @@ import { getD1, getDb } from "../../../../../db";
 import { submissions, themeProposals } from "../../../../../db/schema";
 import { getAuthorizedReviewer } from "../../../../../lib/reviewer-auth";
 import { APPROVED_THEME_STATUS, PENDING_REVIEW_STATUS } from "../../../../../lib/review-policy";
+import { getThemeAssets } from "../../../../../storage";
+
+const CANONICAL_ORIGIN = "https://codex-skindex.vercel.app";
 
 type RouteContext = { params: Promise<{ kind: string; id: string }> };
 
@@ -63,13 +66,13 @@ export async function POST(request: Request, context: RouteContext) {
   if (payload.action === "reject") {
     await getDb().update(themeProposals).set({ status: "rejected" })
       .where(and(eq(themeProposals.id, id), eq(themeProposals.status, PENDING_REVIEW_STATUS)));
+    await getThemeAssets().delete(proposal.previewKey).catch(() => undefined);
     return Response.json({ review: { id, status: "rejected", public: false, next: "closed" } });
   }
 
   const palette = parsePalette(proposal.palette);
   if (palette.length < 3) return Response.json({ error: "主题色板无效，不能发布" }, { status: 409 });
   const themeId = `community-${proposal.id}`;
-  const requestOrigin = new URL(request.url).origin;
   const now = new Date().toISOString();
   const tags = JSON.stringify([proposal.sourceType === "reference-image" ? "参考图生成" : "用户生成", "社区投稿", "原生导入"]);
   const description = proposal.notes || "由 SkinDex 用户生成并经所有者审核通过的社区主题。";
@@ -84,15 +87,15 @@ export async function POST(request: Request, context: RouteContext) {
         themeId,
         proposal.themeName,
         proposal.authorName,
-        `${requestOrigin}/#creators`,
+        `${CANONICAL_ORIGIN}/#creators`,
         proposal.platform,
         inferredMode(palette[0]),
         description,
         tags,
         JSON.stringify(palette),
-        `${requestOrigin}/api/theme-proposals/${proposal.id}/preview`,
-        `${requestOrigin}/#themes`,
-        `${requestOrigin}/#themes`,
+        `${CANONICAL_ORIGIN}/api/theme-proposals/${proposal.id}/preview`,
+        `${CANONICAL_ORIGIN}/#themes`,
+        `${CANONICAL_ORIGIN}/#themes`,
         "SkinDex Community",
         `skindex/community/${proposal.id}`,
         0,

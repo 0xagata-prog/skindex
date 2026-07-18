@@ -209,7 +209,7 @@ export const seedThemes: SeedTheme[] = [
     downloadUrl: "https://github.com/xuhuanstudio/codex-styler/releases/tag/v0.2.0-beta.2",
     sourceName: "Codex Styler",
     sourceRepo: "xuhuanstudio/codex-styler",
-    stars: 7,
+    stars: 10,
     license: "Apache-2.0 / CC BY 4.0",
     verifiedVersion: "v0.2.0-beta.2",
     featured: true,
@@ -230,7 +230,7 @@ export const seedThemes: SeedTheme[] = [
     downloadUrl: "https://github.com/xuhuanstudio/codex-styler/releases/tag/v0.2.0-beta.2",
     sourceName: "Codex Styler",
     sourceRepo: "xuhuanstudio/codex-styler",
-    stars: 7,
+    stars: 10,
     license: "Apache-2.0 / CC BY 4.0",
     verifiedVersion: "v0.2.0-beta.2",
     featured: false,
@@ -251,7 +251,7 @@ export const seedThemes: SeedTheme[] = [
     downloadUrl: "https://github.com/Wangnov/awesome-codex-skins/releases/latest",
     sourceName: "Awesome Codex Skins",
     sourceRepo: "Wangnov/awesome-codex-skins",
-    stars: 7,
+    stars: 13,
     license: "MIT（代码）/ 素材见原仓库",
     verifiedVersion: "Codex 26.707.91948",
     featured: true,
@@ -272,7 +272,7 @@ export const seedThemes: SeedTheme[] = [
     downloadUrl: "https://github.com/Wangnov/awesome-codex-skins/releases/latest",
     sourceName: "Awesome Codex Skins",
     sourceRepo: "Wangnov/awesome-codex-skins",
-    stars: 7,
+    stars: 13,
     license: "MIT（代码）/ 素材见原仓库",
     verifiedVersion: "Codex 26.707.91948",
     featured: false,
@@ -293,7 +293,7 @@ export const seedThemes: SeedTheme[] = [
     downloadUrl: "https://github.com/Wangnov/awesome-codex-skins/releases/latest",
     sourceName: "Awesome Codex Skins",
     sourceRepo: "Wangnov/awesome-codex-skins",
-    stars: 7,
+    stars: 13,
     license: "MIT（代码）/ 素材见原仓库",
     verifiedVersion: "Codex 26.707.91948",
     featured: false,
@@ -314,7 +314,7 @@ export const seedThemes: SeedTheme[] = [
     downloadUrl: "https://github.com/Wangnov/awesome-codex-skins/releases/latest",
     sourceName: "Awesome Codex Skins",
     sourceRepo: "Wangnov/awesome-codex-skins",
-    stars: 7,
+    stars: 13,
     license: "MIT（代码）/ 素材见原仓库",
     verifiedVersion: "Codex 26.707.91948",
     featured: false,
@@ -322,6 +322,7 @@ export const seedThemes: SeedTheme[] = [
   },
 ];
 
+const SEED_VERSION = "2026-07-18-v2";
 let themeDataReady: Promise<void> | undefined;
 
 async function setupThemeData() {
@@ -362,7 +363,30 @@ async function setupThemeData() {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP NOT NULL
     )`),
     d1.prepare("CREATE INDEX IF NOT EXISTS submissions_status_idx ON submissions (status, created_at)"),
+    d1.prepare(`CREATE TABLE IF NOT EXISTS theme_proposals (
+      id TEXT PRIMARY KEY NOT NULL,
+      theme_name TEXT NOT NULL,
+      author_name TEXT NOT NULL,
+      platform TEXT NOT NULL,
+      notes TEXT DEFAULT '' NOT NULL,
+      palette TEXT NOT NULL,
+      preview_key TEXT NOT NULL,
+      preview_mime TEXT NOT NULL,
+      source_type TEXT DEFAULT 'skill-generated' NOT NULL,
+      consent_at TEXT NOT NULL,
+      status TEXT DEFAULT 'pending' NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP NOT NULL
+    )`),
+    d1.prepare("CREATE INDEX IF NOT EXISTS theme_proposals_status_idx ON theme_proposals (status, created_at)"),
+    d1.prepare(`CREATE TABLE IF NOT EXISTS catalog_meta (
+      key TEXT PRIMARY KEY NOT NULL,
+      value TEXT NOT NULL,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP NOT NULL
+    )`),
   ]);
+
+  const currentSeed = await d1.prepare("SELECT value FROM catalog_meta WHERE key = 'seed_version'").first<{ value: string }>();
+  if (currentSeed?.value === SEED_VERSION) return;
 
   await d1.batch(seedThemes.map((theme) => d1.prepare(`INSERT INTO themes (
     id, name, author, author_url, platform, mode, description, tags, palette,
@@ -408,6 +432,10 @@ async function setupThemeData() {
       theme.featured ? 1 : 0,
       theme.updatedAt,
     )));
+
+  await d1.prepare(`INSERT INTO catalog_meta (key, value, updated_at)
+    VALUES ('seed_version', ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP`).bind(SEED_VERSION).run();
 }
 
 export function ensureThemeData() {

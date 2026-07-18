@@ -20,7 +20,7 @@ test("uses Codex Skill Installer with GitHub as the canonical source", async () 
   assert.match(page, /不要读取项目文件，不要搜索网页/);
   assert.match(page, /\$skill-installer/);
   assert.match(page, /github\.com\/0xagata-prog\/skindex/);
-  assert.match(page, /skillSourceUrl = `\$\{githubRepoUrl\}\/tree\/main\/skill`/);
+  assert.match(page, /skillSourceUrl = `\$\{githubRepoUrl\}\/tree\/v0\.5\.0\/skill`/);
   assert.match(page, /用 Codex 安装/);
   assert.doesNotMatch(page, /目标目录/);
   assert.doesNotMatch(page, /手动下载 Skill/);
@@ -73,6 +73,22 @@ test("keeps every submission private until review approval", async () => {
   assert.match(script, /publication: "review-required"/);
 });
 
+test("bounds public submission queues and removes rejected previews", async () => {
+  const [proposalRoute, submissionRoute, guard, reviewAction, reviewPage] = await Promise.all([
+    source("../app/api/theme-proposals/route.ts"),
+    source("../app/api/submissions/route.ts"),
+    source("../lib/submission-guard.ts"),
+    source("../app/api/review/[kind]/[id]/route.ts"),
+    source("../app/review/page.tsx"),
+  ]);
+  assert.match(proposalRoute, /submissionCapacity\("proposal"\)/);
+  assert.match(submissionRoute, /submissionCapacity\("repository"\)/);
+  assert.match(guard, /status: 429/);
+  assert.match(guard, /Retry-After/);
+  assert.match(reviewAction, /getThemeAssets\(\)\.delete\(proposal\.previewKey\)/);
+  assert.match(reviewPage, /\.limit\(101\)/);
+});
+
 test("protects the owner-only review surface on every server boundary", async () => {
   const [reviewPage, reviewAuth, reviewAction, privatePreview, publicPreview] = await Promise.all([
     source("../app/review/page.tsx"),
@@ -110,4 +126,26 @@ test("publishes SkinDex through a narrow Vercel proxy while Sites keeps the back
   assert.match(skill, /https:\/\/codex-skindex\.vercel\.app/);
   assert.match(trustedOrigin, /https:\/\/codex-skindex\.vercel\.app/);
   assert.doesNotMatch(trustedOrigin, /vercel\.app\$|endsWith/);
+  assert.match(proxy, /Content-Security-Policy/);
+  assert.match(proxy, /X-Frame-Options/);
+});
+
+test("publishes legal, SEO, and canonical metadata without trusting forwarded hosts", async () => {
+  const [layout, page, robots, sitemap, privacy, terms, support] = await Promise.all([
+    source("../app/layout.tsx"),
+    source("../app/page.tsx"),
+    source("../app/robots.ts"),
+    source("../app/sitemap.ts"),
+    source("../app/privacy/page.tsx"),
+    source("../app/terms/page.tsx"),
+    source("../app/support/page.tsx"),
+  ]);
+  assert.match(layout, /const canonicalOrigin = "https:\/\/codex-skindex\.vercel\.app"/);
+  assert.doesNotMatch(layout, /x-forwarded-host|headers\(\)/);
+  assert.match(page, /href="\/privacy"/);
+  assert.match(robots, /sitemap/);
+  assert.match(sitemap, /\/support/);
+  assert.match(privacy, /EXIF/);
+  assert.match(terms, /不会静默修改 Codex/);
+  assert.match(support, /GitHub Issues/);
 });

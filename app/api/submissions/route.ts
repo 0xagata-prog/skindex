@@ -3,6 +3,7 @@ import { submissions } from "../../../db/schema";
 import { PENDING_REVIEW_STATUS, pendingReviewResult } from "../../../lib/review-policy";
 import { ensureThemeData } from "../../../lib/theme-seed";
 import { isTrustedBrowserOrigin } from "../../../lib/trusted-origin";
+import { capacityResponse, submissionCapacity } from "../../../lib/submission-guard";
 
 const allowedPlatforms = new Set(["桌面端", "CLI", "全平台"]);
 
@@ -26,6 +27,10 @@ export async function POST(request: Request) {
     }
     const declaredLength = Number(request.headers.get("content-length") ?? 0);
     if (declaredLength > 16 * 1024) return Response.json({ error: "投稿内容过大" }, { status: 413 });
+
+    await ensureThemeData();
+    const capacity = await submissionCapacity("repository");
+    if (!capacity.allowed) return capacityResponse(capacity);
 
     const payload = (await request.json()) as {
       themeName?: string;
@@ -61,7 +66,6 @@ export async function POST(request: Request) {
       return Response.json({ error: "不支持的平台类型" }, { status: 400 });
     }
 
-    await ensureThemeData();
     const id = crypto.randomUUID();
     await getDb().insert(submissions).values({
       id,

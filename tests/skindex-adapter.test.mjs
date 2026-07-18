@@ -3,7 +3,7 @@ import { mkdtemp, readFile, readdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { matchesImageSignature } from "../lib/image-security.ts";
+import { inspectImageUpload, matchesImageSignature } from "../lib/image-security.ts";
 import { getThemeInstallability } from "../lib/theme-capability.ts";
 import { isTrustedBrowserOrigin } from "../lib/trusted-origin.ts";
 
@@ -59,6 +59,24 @@ test("rejects fields outside the v1 schema", async () => {
   const result = validateManifest(manifest);
   assert.equal(result.ok, false);
   assert.match(result.errors.join(" "), /unknown fields/);
+});
+
+test("rejects executable and unknown fields inside native payloads", async () => {
+  const manifest = await sampleManifest();
+  const parsed = JSON.parse(manifest.package.inline.slice("codex-theme-v1:".length));
+  parsed.theme.script = "open -a Codex";
+  manifest.package.inline = `codex-theme-v1:${JSON.stringify(parsed)}`;
+  const result = validateManifest(manifest);
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join(" "), /forbidden executable fields|unknown fields/);
+});
+
+test("enforces manifest and native payload limits", async () => {
+  const manifest = await sampleManifest();
+  manifest.name = "x".repeat(121);
+  const result = validateManifest(manifest);
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join(" "), /name must be 1–120 characters/);
 });
 
 test("reports operating-system incompatibility before staging", async () => {
@@ -156,6 +174,27 @@ test("verifies declared image types by file signature", () => {
   assert.equal(matchesImageSignature("image/png", Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])), true);
   assert.equal(matchesImageSignature("image/jpeg", Uint8Array.from([0xff, 0xd8, 0xff, 0xe0])), true);
   assert.equal(matchesImageSignature("image/png", new TextEncoder().encode("<script>alert(1)</script>")), false);
+});
+
+test("rejects image metadata and excessive dimensions", () => {
+  const chunk = (name, data) => {
+    const result = new Uint8Array(12 + data.length);
+    new DataView(result.buffer).setUint32(0, data.length);
+    result.set(new TextEncoder().encode(name), 4);
+    result.set(data, 8);
+    return result;
+  };
+  const ihdr = new Uint8Array(13);
+  new DataView(ihdr.buffer).setUint32(0, 1);
+  new DataView(ihdr.buffer).setUint32(4, 1);
+  const signature = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const safe = new Uint8Array([...signature, ...chunk("IHDR", ihdr), ...chunk("IEND", new Uint8Array())]);
+  assert.deepEqual(inspectImageUpload("image/png", safe), { ok: true, width: 1, height: 1 });
+  const tracked = new Uint8Array([...signature, ...chunk("IHDR", ihdr), ...chunk("tEXt", new TextEncoder().encode("author=private")), ...chunk("IEND", new Uint8Array())]);
+  assert.equal(inspectImageUpload("image/png", tracked).ok, false);
+  new DataView(ihdr.buffer).setUint32(0, 5000);
+  const huge = new Uint8Array([...signature, ...chunk("IHDR", ihdr), ...chunk("IEND", new Uint8Array())]);
+  assert.equal(inspectImageUpload("image/png", huge).ok, false);
 });
 
 test("marks consented proposal requests as SkinDex Skill traffic", async () => {

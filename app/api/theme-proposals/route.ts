@@ -1,10 +1,11 @@
 import { getDb } from "../../../db";
 import { themeProposals } from "../../../db/schema";
 import { ensureThemeData } from "../../../lib/theme-seed";
-import { matchesImageSignature } from "../../../lib/image-security";
+import { inspectImageUpload } from "../../../lib/image-security";
 import { PENDING_REVIEW_STATUS, pendingReviewResult } from "../../../lib/review-policy";
 import { getThemeAssets } from "../../../storage";
 import { isTrustedBrowserOrigin } from "../../../lib/trusted-origin";
+import { capacityResponse, submissionCapacity } from "../../../lib/submission-guard";
 
 const allowedPlatforms = new Set(["桌面端", "CLI", "全平台"]);
 const allowedMimeTypes = new Set(["image/png", "image/jpeg", "image/webp"]);
@@ -31,14 +32,18 @@ export async function POST(request: Request) {
   let uploadedKey = "";
   try {
     const origin = request.headers.get("origin");
-    const skillClient = request.headers.get("x-skindex-client");
+    const skillClientMarker = request.headers.get("x-skindex-client");
     const sameOriginBrowser = isTrustedBrowserOrigin(request);
-    const trustedSkillClient = !origin && skillClient === "skindex-skill-v1";
-    if (!sameOriginBrowser && !trustedSkillClient) {
+    const officialSkillRequest = !origin && skillClientMarker === "skindex-skill-v1";
+    if (!sameOriginBrowser && !officialSkillRequest) {
       return Response.json({ error: "投稿客户端无法验证" }, { status: 403 });
     }
     const declaredLength = Number(request.headers.get("content-length") ?? 0);
     if (declaredLength > 750 * 1024) return Response.json({ error: "投稿内容过大" }, { status: 413 });
+
+    await ensureThemeData();
+    const capacity = await submissionCapacity("proposal");
+    if (!capacity.allowed) return capacityResponse(capacity);
 
     const data = await request.formData();
     const metadataValue = data.get("metadata");
@@ -78,11 +83,9 @@ export async function POST(request: Request) {
     }
 
     const previewBytes = await preview.arrayBuffer();
-    if (!matchesImageSignature(preview.type, previewBytes)) {
-      return Response.json({ error: "预览图内容与文件类型不匹配" }, { status: 400 });
-    }
+    const imageInspection = inspectImageUpload(preview.type, previewBytes);
+    if (!imageInspection.ok) return Response.json({ error: imageInspection.error }, { status: 400 });
 
-    await ensureThemeData();
     const id = crypto.randomUUID();
     uploadedKey = `theme-proposals/${id}/preview.${safeExtension(preview.type)}`;
     const consentAt = new Date().toISOString();

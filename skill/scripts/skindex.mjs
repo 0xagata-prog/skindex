@@ -63,35 +63,92 @@ function rejectUnknownKeys(value, allowed, location, errors) {
   if (unknown.length) errors.push(`${location} contains unknown fields: ${unknown.join(", ")}`);
 }
 
-function validateNativePayload(payload, errors) {
+function requiredString(value, location, errors, { min = 1, max = 200 } = {}) {
+  if (typeof value !== "string" || value.trim().length < min || value.length > max) {
+    errors.push(`${location} must be ${min}–${max} characters`);
+    return false;
+  }
+  return true;
+}
+
+function validateColor(value, location, errors) {
+  if (!/^#[0-9a-f]{6}$/i.test(value ?? "")) errors.push(`${location} must be a six-digit hex color`);
+}
+
+function parseNativePayload(payload, errors) {
   if (typeof payload !== "string" || !payload.startsWith("codex-theme-v1:")) {
     errors.push("package.inline must start with codex-theme-v1:");
-    return;
+    return null;
   }
-
-  let parsed;
+  if (payload.length > 200_000) {
+    errors.push("package.inline exceeds 200000 characters");
+    return null;
+  }
   try {
-    parsed = JSON.parse(payload.slice("codex-theme-v1:".length));
+    return JSON.parse(payload.slice("codex-theme-v1:".length));
   } catch {
     errors.push("package.inline contains invalid codex-theme-v1 JSON");
-    return;
+    return null;
   }
+}
+
+function validateNativePayload(payload, errors) {
+  const parsed = parseNativePayload(payload, errors);
+  if (!parsed) return;
 
   if (!isObject(parsed) || !isObject(parsed.theme)) {
     errors.push("native payload must contain a theme object");
     return;
   }
-  if (typeof parsed.codeThemeId !== "string" || !parsed.codeThemeId.trim()) {
-    errors.push("native payload must contain codeThemeId");
-  }
+  rejectUnknownKeys(parsed, new Set(["codeThemeId", "theme", "variant"]), "package.inline", errors);
+  rejectUnknownKeys(parsed.theme, new Set(["accent", "contrast", "fonts", "ink", "opaqueWindows", "semanticColors", "surface"]), "package.inline.theme", errors);
+  rejectUnknownKeys(parsed.theme.fonts, new Set(["code", "ui"]), "package.inline.theme.fonts", errors);
+  rejectUnknownKeys(parsed.theme.semanticColors, new Set(["diffAdded", "diffRemoved", "skill"]), "package.inline.theme.semanticColors", errors);
+  if (parsed.codeThemeId !== "codex") errors.push("native payload codeThemeId must be codex");
   if (!new Set(["dark", "light"]).has(parsed.variant)) {
     errors.push("native payload variant must be dark or light");
   }
   for (const color of ["surface", "ink", "accent"]) {
-    if (!/^#[0-9a-f]{6}$/i.test(parsed.theme[color] ?? "")) {
-      errors.push(`native payload theme.${color} must be a six-digit hex color`);
+    validateColor(parsed.theme[color], `native payload theme.${color}`, errors);
+  }
+  if (!Number.isInteger(parsed.theme.contrast) || parsed.theme.contrast < 0 || parsed.theme.contrast > 100) {
+    errors.push("native payload theme.contrast must be an integer from 0 to 100");
+  }
+  if (parsed.theme.opaqueWindows !== true && parsed.theme.opaqueWindows !== false) {
+    errors.push("native payload theme.opaqueWindows must be boolean");
+  }
+  if (!isObject(parsed.theme.fonts)) errors.push("native payload theme.fonts must be an object");
+  else {
+    requiredString(parsed.theme.fonts.code, "native payload theme.fonts.code", errors, { max: 80 });
+    requiredString(parsed.theme.fonts.ui, "native payload theme.fonts.ui", errors, { max: 80 });
+  }
+  if (!isObject(parsed.theme.semanticColors)) errors.push("native payload theme.semanticColors must be an object");
+  else {
+    for (const color of ["diffAdded", "diffRemoved", "skill"]) {
+      validateColor(parsed.theme.semanticColors[color], `native payload theme.semanticColors.${color}`, errors);
     }
   }
+}
+
+function canonicalNativePayload(payload) {
+  const parsed = parseNativePayload(payload, []);
+  return `codex-theme-v1:${JSON.stringify({
+    codeThemeId: parsed.codeThemeId,
+    theme: {
+      accent: parsed.theme.accent,
+      contrast: parsed.theme.contrast,
+      fonts: { code: parsed.theme.fonts.code, ui: parsed.theme.fonts.ui },
+      ink: parsed.theme.ink,
+      opaqueWindows: parsed.theme.opaqueWindows,
+      semanticColors: {
+        diffAdded: parsed.theme.semanticColors.diffAdded,
+        diffRemoved: parsed.theme.semanticColors.diffRemoved,
+        skill: parsed.theme.semanticColors.skill,
+      },
+      surface: parsed.theme.surface,
+    },
+    variant: parsed.variant,
+  })}`;
 }
 
 export function validateManifest(manifest) {
@@ -99,6 +156,7 @@ export function validateManifest(manifest) {
   const warnings = [];
 
   if (!isObject(manifest)) return { ok: false, errors: ["manifest must be a JSON object"], warnings };
+  if (JSON.stringify(manifest).length > 250_000) errors.push("manifest exceeds 250000 characters");
 
   const forbidden = findForbiddenKeys(manifest);
   if (forbidden.length) errors.push(`manifest contains forbidden executable fields: ${forbidden.join(", ")}`);
@@ -126,21 +184,24 @@ export function validateManifest(manifest) {
   rejectUnknownKeys(manifest.install, new Set(["adapter", "experience", "supportLevel", "requiresUserConfirmation", "rollback"]), "install", errors);
 
   if (manifest.schemaVersion !== "skindex/v1") errors.push("schemaVersion must be skindex/v1");
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(manifest.id ?? "")) errors.push("id must be lowercase kebab-case");
-  if (typeof manifest.name !== "string" || !manifest.name.trim()) errors.push("name is required");
-  if (typeof manifest.summary !== "string" || !manifest.summary.trim()) errors.push("summary is required");
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(manifest.id ?? "") || String(manifest.id ?? "").length > 80) errors.push("id must be lowercase kebab-case and at most 80 characters");
+  requiredString(manifest.name, "name", errors, { max: 120 });
+  requiredString(manifest.summary, "summary", errors, { max: 280 });
 
   if (!isObject(manifest.author) || typeof manifest.author.name !== "string" || !isHttps(manifest.author.url)) {
     errors.push("author.name and an HTTPS author.url are required");
+  } else {
+    requiredString(manifest.author.name, "author.name", errors, { max: 100 });
+    if (manifest.author.url.length > 2048) errors.push("author.url exceeds 2048 characters");
   }
   if (!isObject(manifest.source) || !isHttps(manifest.source.repository)) {
     errors.push("source.repository must be HTTPS");
+  } else if (manifest.source.repository.length > 2048) {
+    errors.push("source.repository exceeds 2048 characters");
   }
-  if (!isObject(manifest.source) || typeof manifest.source.revision !== "string" || !manifest.source.revision.trim()) {
-    errors.push("source.revision is required");
-  }
-  if (!isObject(manifest.source) || typeof manifest.source.license !== "string" || !manifest.source.license.trim()) {
-    errors.push("source.license is required");
+  if (isObject(manifest.source)) {
+    requiredString(manifest.source.revision, "source.revision", errors, { max: 160 });
+    requiredString(manifest.source.license, "source.license", errors, { max: 160 });
   }
 
   const surfaces = manifest.compatibility?.surfaces;
@@ -151,7 +212,7 @@ export function validateManifest(manifest) {
   if (!Array.isArray(systems) || !systems.length || systems.some((item) => !["macos", "windows", "linux"].includes(item))) {
     errors.push("compatibility.os must contain supported operating systems");
   }
-  if (!isHttps(manifest.preview?.imageUrl)) errors.push("preview.imageUrl must be HTTPS");
+  if (!isHttps(manifest.preview?.imageUrl) || manifest.preview.imageUrl.length > 2048) errors.push("preview.imageUrl must be HTTPS and at most 2048 characters");
 
   const format = manifest.package?.format;
   const expectedAdapter = FORMAT_ADAPTERS[format];
@@ -192,7 +253,7 @@ export function validateManifest(manifest) {
     errors.push("updatedAt must be an ISO date-time");
   }
   if (expectedAdapter && !AVAILABLE_ADAPTERS.has(expectedAdapter)) {
-    warnings.push(`${expectedAdapter} is recognized but unavailable in SkinDex Skill v0.4.0`);
+    warnings.push(`${expectedAdapter} is recognized but unavailable in SkinDex Skill v0.5.0`);
   }
 
   return { ok: errors.length === 0, errors, warnings };
@@ -262,9 +323,11 @@ async function writeJsonAtomic(filePath, value) {
 
 export async function stageManifest(manifest, { stateRoot = stateRootFromEnvironment(), now = () => new Date() } = {}) {
   const plan = planManifest(manifest, { stateRoot });
-  if (plan.status !== "ready") throw new Error(`${plan.adapter} is not available in SkinDex Skill v0.4.0`);
+  if (plan.status !== "ready") throw new Error(`${plan.adapter} is not available in SkinDex Skill v0.5.0`);
 
-  const manifestText = `${JSON.stringify(manifest, null, 2)}\n`;
+  const normalizedManifest = structuredClone(manifest);
+  normalizedManifest.package.inline = canonicalNativePayload(manifest.package.inline);
+  const manifestText = `${JSON.stringify(normalizedManifest, null, 2)}\n`;
   const revision = sha256(manifestText);
   const transactionId = randomUUID();
   const installedAt = now().toISOString();
@@ -294,7 +357,7 @@ export async function stageManifest(manifest, { stateRoot = stateRootFromEnviron
 
   await mkdir(themeRoot, { recursive: true });
   await writeFile(manifestPath, manifestText, "utf8");
-  await writeFile(payloadPath, `${manifest.package.inline}\n`, "utf8");
+  await writeFile(payloadPath, `${normalizedManifest.package.inline}\n`, "utf8");
   await writeJsonAtomic(transactionPath, transaction);
 
   state.installations[manifest.id] ??= { revisions: {} };
