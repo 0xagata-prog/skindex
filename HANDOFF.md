@@ -2,7 +2,7 @@ Goal:
 Publish and maintain SkinDex at the owner-selected canonical URL `https://codex-skindex.vercel.app` while preserving the existing ChatGPT Sites deployment as the D1/R2/SIWC backend.
 
 Current state:
-The public GitHub repository is `https://github.com/0xagata-prog/skindex`. The canonical Skill name is `skindex`, invocation is `$skindex`, protocol is `skindex/v1`, and the released repository Skill remains the installation source. A Vercel project named `codex-skindex` owns the exact production alias `https://codex-skindex.vercel.app` and proxies public routes to the existing Sites backend. Vercel deployment `dpl_FUWH45WpRbh8N2BEfVqrbEJLqWdM` is READY with no alias error. Git commit `668dd855a10d7b4c2eba687c85d4eb09a4e0c96f` contains the latest production website revision; the stable Skill remains tagged `v0.5.0`. Sites version 23 is published successfully from that commit with environment revision 2, and GitHub release `v0.5.0` contains the verified Skill ZIP.
+The public GitHub repository is `https://github.com/0xagata-prog/skindex`. The canonical Skill name is `skindex`, invocation is `$skindex`, protocol is `skindex/v1`, and the released repository Skill remains the installation source. A Vercel project named `codex-skindex` owns the exact production alias `https://codex-skindex.vercel.app` and proxies public routes to the existing Sites backend. Vercel deployment `dpl_FUWH45WpRbh8N2BEfVqrbEJLqWdM` is READY with no alias error. Git commit `1d4b95839f1124bf10cd6f4b92caf612123b230e` contains the latest production website revision; the stable Skill remains tagged `v0.5.0`. Sites version 24 and deployment `appgdep_6a5ba78ff8c88191a341d65360dff8ac` are published successfully from that commit, and GitHub release `v0.5.0` contains the verified Skill ZIP.
 
 Files touched or relevant:
 README.md
@@ -11,6 +11,13 @@ app/globals.css
 app/page.tsx
 app/api/submissions/route.ts
 app/api/theme-proposals/route.ts
+app/api/review/themes/[id]/route.ts
+app/api/review/themes/[id]/preview/route.ts
+app/api/themes/[id]/previews/[asset]/route.ts
+app/review/themes/page.tsx
+app/review/themes/theme-manager.tsx
+lib/theme-admin.ts
+lib/theme-admin-store.ts
 lib/trusted-origin.ts
 lib/theme-seed.ts
 catalog/blue-messenger-2007.json
@@ -24,7 +31,7 @@ Important decisions:
 Vercel is the public URL layer only; ChatGPT Sites remains the data, object storage, and owner-auth backend. Browser-origin checks use an exact allowlist for `codex-skindex.vercel.app` and the legacy Sites origin, never a wildcard for `vercel.app`. The owner review login may redirect to the legacy Sites hostname because SIWC remains hosted there. The old Sites hostname stays live for compatibility. The Skill default endpoint and all official product links use the new Vercel URL.
 
 What to do next:
-Use `https://codex-skindex.vercel.app` as the only public URL in future product copy. Keep production dependency audit at zero and let Dependabot open weekly npm and GitHub Actions updates. Monitor Drizzle Kit for a release that removes its deprecated `@esbuild-kit` loader. If desired later, migrate SIWC off the legacy Sites hostname or attach a separately owned custom domain; neither is required for the current public product.
+Use `https://codex-skindex.vercel.app` as the only public URL in future product copy. Keep production dependency audit at zero and let Dependabot open weekly npm and GitHub Actions updates. Monitor Drizzle Kit for a release that removes its deprecated `@esbuild-kit` loader. Prioritize per-client abuse protection for anonymous Skill uploads, retention/garbage collection for old R2 previews and revision rows, and pagination for the review queue. Then add optimistic concurrency to owner edits and indexes/FTS when the catalog grows beyond the current scale. If desired later, migrate SIWC off the legacy Sites hostname or attach a separately owned custom domain; neither is required for the current public product.
 
 Known risks:
 The public URL layer depends on the existing Sites backend, so a Sites outage affects the Vercel URL. Sign in with ChatGPT still uses the legacy Sites origin. Existing seeded D1 rows may retain stored legacy source URLs until a later data migration; newly rendered metadata, official links, and the Skill use the canonical Vercel address.
@@ -46,3 +53,9 @@ Catalog cards are equal-height flex columns. Titles reserve two lines (48px), de
 
 Publishing and catalog scale standard (2026-07-18):
 Community, merchant, partner, and SkinDex Lab themes now share one code-enforced publishing contract: 2–64 character names, 2–60 character authors, descriptions capped at 180 characters, at most four unique 16-character tags, and landscape previews of at least 960×540px within a 1.45:1–1.9:1 aspect range. Generated proposals are validated before review and normalized again on approval. The catalog API now performs search and filtering in D1 and returns at most 24 themes per page, with URL-persisted page/search/filter state, desktop page numbers, and compact mobile navigation. A 500-theme test produces 21 pages; production currently returns 14 themes on page 1 and correctly clamps out-of-range requests.
+
+Published-theme management (2026-07-18):
+The owner-only `/review/themes` surface now searches and paginates all catalog rows and supports editing normalized metadata, featured state, reversible publish/unpublish, and verified preview replacement. Every mutation requires the configured SIWC reviewer plus an exact same-origin request. Before each change, D1 stores a full snapshot, action, editor email, and timestamp in `theme_revisions`; any listed revision can be restored while preserving the replaced state as a new revision. Preview uploads are signature/metadata/dimension checked and stored at immutable versioned R2 keys. There is deliberately no destructive theme-delete endpoint. Manual owner edits write a `theme_override:<id>` marker so future seed synchronization cannot overwrite them. PR #16 passed required CI and was squash-merged as `1d4b958`; Sites version 24 is live. Typecheck, lint, 20 Skill/security tests, 9 build/render tests, zero-vulnerability production audit, and local/live smoke checks passed.
+
+Backend follow-up audit (2026-07-18):
+No new critical or production dependency vulnerability was found. The GitHub moderate alert is the known development-only `drizzle-kit` → `@esbuild-kit` → `esbuild@0.18.20` chain; it is not present in the production runtime and currently has no compatible upstream npm fix. Highest-priority product work is to replace the forgeable static Skill client marker and global-only queue cap with per-client or signed upload authorization. Next, add lifecycle retention for old managed preview objects and revision rows without breaking rollback, paginate the pending-review UI instead of exposing only the latest 100 records, and return explicit 400 responses for malformed JSON/form-data in the older submission/review routes. At larger scale, add status/created-at and catalog ordering indexes, FTS-based search, per-theme revision queries, and optimistic concurrency tokens to prevent two owner tabs from overwriting one another. Also consider moving runtime schema creation out of request paths after Sites migration execution is guaranteed. The canonical homepage and catalog return 200; both canonical and Sites `/review/themes` routes return the expected 307 authentication redirect.
