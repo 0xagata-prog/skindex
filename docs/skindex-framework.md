@@ -12,7 +12,7 @@
 
 - 首次安装：主题按钮先显示安装门槛。用户选择“还没安装”后，官网打开 Codex，并由内置 `$skill-installer` 从官方 GitHub `skill/` 目录安装。
 - 安装确认：安装后必须开启新对话。用户回到官网并明确选择“我已安装”，网站只在当前设备记录这次自我确认；它不能读取本地技能列表。
-- 日常换肤：已确认安装的设备才会从主题卡打开带 `skindex_request` 的 Codex 任务；Skill 获取 Manifest、验证、创建恢复点并暂存，用户在外观设置中完成最终确认。
+- 日常换肤：已确认安装的设备才会从主题卡打开带 `skindex_request` 的 Codex 任务；Skill 获取 Manifest、验证、创建恢复点、复制主题并打开设置，用户在外观设置中完成一次最终确认。
 - 失败保护：任何 SkinDex 深链都先要求检查 `skindex` 是否已安装。缺失时立即停止，不读取项目、不搜索网页、不请求 Manifest，也不创建恢复点。
 - 浏览器永远不静默写入 Skill 目录，也不静默修改 Codex 外观。
 
@@ -50,7 +50,7 @@
 
 - `codex-theme-v1 → codex-native-v1` 已可验证、暂存和恢复。
 - `.codexskin` 与 Codex Styler 仍只识别格式，不自动执行。
-- Codex 没有公开的外观自动导入深链，最终导入仍需用户在 Appearance 中确认。
+- Codex 没有公开的主题安装深链；SkinDex 使用官方 `codex://settings` 打开设置，但最终导入仍需用户在 Appearance 中确认。
 - 插件尚未进入公开 Plugins Directory，官网现在不宣传或分发插件包。
 - 独立 Skill 由 Codex 内置 `$skill-installer` 从 GitHub 安装；官网深链只预填对话。
 - 生成主题绝不默认上传；第一次询问只确认投稿意愿，第二次确认才授权上传。所有投稿固定进入私有 `pending` 队列，只有 `approved` 主题能被公开 API 和官网目录读取。高清预览保留本地，上传审核缩略图限制为 700 KB。

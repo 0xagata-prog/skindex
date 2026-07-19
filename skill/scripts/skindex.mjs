@@ -16,7 +16,7 @@ const FORMAT_ADAPTERS = Object.freeze({
 
 const AVAILABLE_ADAPTERS = new Set(["codex-native-v1"]);
 const DEFAULT_ENDPOINT = "https://codex-skindex.vercel.app";
-const SKILL_VERSION = "0.5.1";
+const SKILL_VERSION = "0.5.2";
 const FORBIDDEN_KEYS = new Set([
   "command",
   "commands",
@@ -465,14 +465,21 @@ export async function copyTransactionPayload(transactionId, {
   const payload = (await readFile(transaction.payloadPath, "utf8")).trimEnd();
   try {
     const provider = copyImpl(payload);
-    return { status: "copied", transactionId, provider };
+    return {
+      status: "copied",
+      transactionId,
+      provider,
+      settingsUrl: "codex://settings",
+      nextAction: "open-codex-settings",
+    };
   } catch {
     return {
-      status: "copy-unavailable",
+      status: "clipboard-permission-required",
       transactionId,
-      payload,
-      nextAction: "show-payload",
-      message: "System clipboard access is unavailable. Show the exact payload in a copyable text block.",
+      payloadPath: transaction.payloadPath,
+      settingsUrl: "codex://settings",
+      nextAction: "request-clipboard-access",
+      message: "Request narrow system clipboard access and copy the managed payload file. Do not show its contents unless the user declines or the retry fails.",
     };
   }
 }

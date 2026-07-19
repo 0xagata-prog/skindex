@@ -18,8 +18,8 @@ test("uses Codex Skill Installer with GitHub as the canonical source", async () 
   assert.match(page, /我已安装：在 Codex 中打开主题/);
   assert.match(page, /\$skill-installer/);
   assert.match(page, /github\.com\/0xagata-prog\/skindex/);
-  assert.match(page, /skillSourceUrl = `\$\{githubRepoUrl\}\/tree\/v0\.5\.1\/skill`/);
-  assert.match(page, /SKINDEX_SKILL_READY_KEY = "skindex-skill-ready-v2"/);
+  assert.match(page, /skillSourceUrl = `\$\{githubRepoUrl\}\/tree\/v0\.5\.2\/skill`/);
+  assert.match(page, /SKINDEX_SKILL_READY_KEY = "skindex-skill-ready-v3"/);
   assert.match(page, /return codexPromptUrl\(`\$skindex/);
   assert.doesNotMatch(page, /若不存在，立即停止/);
   assert.doesNotMatch(page, /先验证 Manifest、来源、兼容性与适配器/);
@@ -51,14 +51,22 @@ test("routes theme actions through declared support levels", async () => {
   assert.match(page, /打开主题/);
   assert.doesNotMatch(page, /href=\{themeUseChatUrl\(theme\)\}/);
   assert.match(page, /skindex_request=/);
+  assert.match(page, /navigator\.clipboard\.writeText\(buildNativeThemePayload\(theme\)\)/);
+  assert.match(page, /clipboardPrepared/);
+  assert.match(page, /themeRevision: theme\.updatedAt/);
   assert.match(page, /暂不支持导入/);
   assert.doesNotMatch(page, /查看兼容状态/);
   assert.match(page, /theme-status-pill/);
+  assert.match(page, /快捷导入 · 需确认/);
   assert.doesNotMatch(page, /className=\{`compatibility/);
   assert.match(styles, /\.theme-card \{[^}]*height: 100%;[^}]*display: flex;/);
   assert.match(styles, /\.card-body \{[^}]*flex: 1;[^}]*display: flex;/);
   assert.match(styles, /\.use-now-button \{[^}]*margin: auto 0 14px;/);
   assert.match(skill, /`verified`, `staged`, `awaiting-confirmation`, or `confirmed`/);
+  assert.match(skill, /codex:\/\/settings/);
+  assert.match(skill, /clipboardPrepared: true/);
+  assert.match(skill, /themeRevision/);
+  assert.match(skill, /do \*\*not\*\* print the theme payload/);
 });
 
 test("paginates the catalog on the server and fixes the publishing format", async () => {

@@ -12,7 +12,7 @@ Codex 口袋皮肤图鉴：在一个目录里发现真实主题，用 `$skindex`
 
 ```text
 $skill-installer
-请从 https://github.com/0xagata-prog/skindex/tree/v0.5.1/skill 安装官方 SkinDex Skill，并将它安装为 skindex。
+请从 https://github.com/0xagata-prog/skindex/tree/v0.5.2/skill 安装官方 SkinDex Skill，并将它安装为 skindex。
 ```
 
 安装完成后开启新对话：
@@ -27,7 +27,7 @@ $skindex 参考我发的图片生成一个原创主题。
 ## 产品边界
 
 - 官网是实时目录、Manifest API 和审核入口；GitHub 是 Skill 的唯一源码和版本源。
-- 主题导入先验证来源和兼容性，并创建恢复点；最终外观修改仍由用户在 Codex 中确认。
+- 主题导入先验证来源和兼容性，创建恢复点，复制设置并打开 Codex；最终外观修改仍由用户确认一次。
 - `.codexskin` 与 Codex Styler 适配器尚未开放，只展示可追溯来源。
 - 生成主题默认只保存在本地；明确确认后才进入私有审核队列，审核通过才公开。
 - 插件版等正式上架后再开放，当前只分发独立 Skill。

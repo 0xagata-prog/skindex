@@ -119,16 +119,32 @@ test("stages, confirms, and resolves a restore point in managed storage", async 
   assert.match(await readFile(restore.payloadPath, "utf8"), /#18382B/);
 });
 
-test("returns a copyable payload when the sandbox blocks the system clipboard", async () => {
+test("requests clipboard access without exposing the payload when the sandbox blocks it", async () => {
   const stateRoot = await mkdtemp(path.join(tmpdir(), "skindex-copy-test-"));
   const staged = await stageManifest(await sampleManifest(), { stateRoot });
   const result = await copyTransactionPayload(staged.transactionId, {
     stateRoot,
     copyImpl: () => { throw new Error("clipboard denied"); },
   });
-  assert.equal(result.status, "copy-unavailable");
-  assert.equal(result.nextAction, "show-payload");
-  assert.match(result.payload, /^codex-theme-v1:/);
+  assert.equal(result.status, "clipboard-permission-required");
+  assert.equal(result.nextAction, "request-clipboard-access");
+  assert.equal(result.settingsUrl, "codex://settings");
+  assert.match(result.payloadPath, /payload\.txt$/);
+  assert.equal(Object.hasOwn(result, "payload"), false);
+});
+
+test("returns the official Settings handoff after copying a theme", async () => {
+  const stateRoot = await mkdtemp(path.join(tmpdir(), "skindex-copy-success-test-"));
+  const staged = await stageManifest(await sampleManifest(), { stateRoot });
+  let copied = "";
+  const result = await copyTransactionPayload(staged.transactionId, {
+    stateRoot,
+    copyImpl: (payload) => { copied = payload; return "test-clipboard"; },
+  });
+  assert.match(copied, /^codex-theme-v1:/);
+  assert.equal(result.status, "copied");
+  assert.equal(result.settingsUrl, "codex://settings");
+  assert.equal(result.nextAction, "open-codex-settings");
 });
 
 test("uses the official default when no prior SkinDex theme exists", async () => {
