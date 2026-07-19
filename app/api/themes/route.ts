@@ -6,6 +6,7 @@ import { getThemeInstallability } from "../../../lib/theme-capability";
 import { getThemePagination } from "../../../lib/theme-pagination";
 import { APPROVED_THEME_STATUS, isPublicThemeStatus } from "../../../lib/review-policy";
 import { ensureThemeData } from "../../../lib/theme-seed";
+import { buildDreamSkinRuntimePlan } from "../../../lib/dream-skin-runtime";
 
 function parseList(value: string): string[] {
   try {
@@ -47,6 +48,16 @@ export async function GET(request: Request) {
     await ensureThemeData();
     const url = new URL(request.url);
     const requestedId = url.searchParams.get("id");
+    if (url.searchParams.get("format") === "runtime-plan") {
+      if (!requestedId) return Response.json({ error: "缺少主题 ID" }, { status: 400 });
+      const [theme] = await getDb().select().from(themes).where(eq(themes.id, requestedId)).limit(1);
+      if (!theme || !isPublicThemeStatus(theme.status)) return Response.json({ error: "主题不存在" }, { status: 404 });
+      const plan = buildDreamSkinRuntimePlan(requestedId, url.origin);
+      if (!plan || theme.sourceRepo !== "Fei-Away/Codex-Dream-Skin") {
+        return Response.json({ error: "这个完整皮肤尚未接入安全运行时" }, { status: 409 });
+      }
+      return Response.json(plan, { headers: { "Cache-Control": "public, max-age=60, s-maxage=300" } });
+    }
     if (url.searchParams.get("format") === "manifest") {
       if (!requestedId) return Response.json({ error: "缺少主题 ID" }, { status: 400 });
       const [theme] = await getDb()

@@ -34,8 +34,8 @@ export const seedThemes: SeedTheme[] = [
     authorUrl: "https://github.com/Fei-Away/Codex-Dream-Skin",
     platform: "桌面端",
     mode: "深色",
-    description: "Dream Skin 实测精选预设：连续背景层、原生可交互控件、主题切换与一键恢复；当前由源项目运行，SkinDex 安全适配器尚在建设。",
-    tags: ["完整皮肤", "Dream Skin", "实机验证", "运行时来源"],
+    description: "Dream Skin macOS 实测精选预设：连续背景层、原生可交互控件、主题切换与一键恢复；现已接入 SkinDex 安全运行时。",
+    tags: ["完整皮肤", "Dream Skin", "macOS", "实机验证"],
     palette: ["#08070D", "#DDD4C8", "#9D7B52"],
     previewUrl: `${dreamSkinBase}/docs/images/presets/gothic-void-crusade-preview.jpg`,
     sourceUrl: "https://github.com/Fei-Away/Codex-Dream-Skin",
@@ -44,7 +44,7 @@ export const seedThemes: SeedTheme[] = [
     sourceRepo: "Fei-Away/Codex-Dream-Skin",
     stars: 9992,
     license: "MIT（macOS 代码）/ 素材见原仓库",
-    verifiedVersion: "Dream Skin CDP · macOS / Windows",
+    verifiedVersion: "Dream Skin CDP · macOS 实测",
     featured: true,
     updatedAt: "2026-07-19T16:57:06+08:00",
   },
@@ -344,7 +344,7 @@ export const seedThemes: SeedTheme[] = [
   },
 ];
 
-const SEED_VERSION = "2026-07-19-dream-skin-v1";
+const SEED_VERSION = "2026-07-19-dream-skin-runtime-v1";
 let themeDataReady: Promise<void> | undefined;
 
 async function setupThemeData() {
