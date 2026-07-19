@@ -21,6 +21,15 @@ function parsePalette(value: string) {
   }
 }
 
+function parseCapabilities(value: string) {
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.map(String).slice(0, 7) : [];
+  } catch {
+    return [];
+  }
+}
+
 export default async function ReviewPage() {
   const user = await requireChatGPTUser("/review");
   if (!isConfiguredReviewer(user)) {
@@ -64,15 +73,17 @@ export default async function ReviewPage() {
           <div className="review-grid">
             {visibleGeneratedProposals.map((proposal) => {
               const palette = parsePalette(proposal.palette);
+              const capabilities = parseCapabilities(proposal.capabilities);
               return (
                 <article className="review-card" key={proposal.id}>
                   <div className="review-preview"><img src={`/api/review/proposals/${proposal.id}/preview`} alt={`${proposal.themeName} 审核预览`} /></div>
                   <div className="review-card-body">
-                    <div className="review-meta"><span>{proposal.platform}</span><span>{proposal.sourceType}</span><span>{proposal.createdAt}</span></div>
+                    <div className="review-meta"><span>{proposal.platform}</span><span>{proposal.engine}</span><span>{proposal.verifiedInCodex ? "已实机验证" : "待实机验证"}</span><span>{proposal.createdAt}</span></div>
                     <h3>{proposal.themeName}</h3><p className="author">by {proposal.authorName}</p>
                     <p className="notes">{proposal.notes || "投稿者没有补充说明。"}</p>
                     <div className="review-palette" aria-label="主题色板">{palette.map((color) => <span key={color} title={color} style={{ background: color }} />)}</div>
-                    <ReviewActions kind="proposal" id={proposal.id} />
+                    <p className="notes">能力：{capabilities.join(" / ") || "未声明"}{proposal.sourceUrl ? <> · <a href={proposal.sourceUrl} target="_blank" rel="noreferrer">来源链接</a></> : null}</p>
+                    <ReviewActions kind="proposal" id={proposal.id} engine={proposal.engine} />
                   </div>
                 </article>
               );
@@ -85,17 +96,21 @@ export default async function ReviewPage() {
         <div className="review-section-heading"><h2>GitHub 仓库</h2><p>接受后进入人工编目 · 不自动公开</p></div>
         {visibleRepoSubmissions.length ? (
           <div className="review-grid">
-            {visibleRepoSubmissions.map((submission) => (
+            {visibleRepoSubmissions.map((submission) => {
+              const capabilities = parseCapabilities(submission.capabilities);
+              return (
               <article className="review-card" key={submission.id}>
                 <div className="review-card-body">
-                  <div className="review-meta"><span>{submission.platform}</span><span>{submission.createdAt}</span></div>
+                  <div className="review-meta"><span>{submission.platform}</span><span>{submission.engine}</span><span>{submission.verifiedInCodex ? "已实机验证" : "待实机验证"}</span><span>{submission.createdAt}</span></div>
                   <h3>{submission.themeName}</h3><p className="author">by {submission.authorName}</p>
                   <p className="notes">{submission.notes || "投稿者没有补充说明。"}</p>
+                  <p className="notes">能力：{capabilities.join(" / ") || "未声明"}</p>
                   <dl><div><dt>仓库</dt><dd><a href={submission.repoUrl} target="_blank" rel="noreferrer">{submission.repoUrl}</a></dd></div><div><dt>审核编号</dt><dd>{submission.id}</dd></div></dl>
-                  <ReviewActions kind="submission" id={submission.id} />
+                  <ReviewActions kind="submission" id={submission.id} engine={submission.engine} />
                 </div>
               </article>
-            ))}
+              );
+            })}
           </div>
         ) : <div className="review-empty">暂无 GitHub 仓库等待审核。</div>}
       </section>

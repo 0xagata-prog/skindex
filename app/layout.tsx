@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export function generateMetadata(): Metadata {
   const title = "SkinDex — Codex 口袋皮肤图鉴";
-  const description = "在 SkinDex 发现、收藏和安全导入真实 Codex 社区主题，也可以通过 $skindex Skill 生成并投稿自己的皮肤。";
+  const description = "SkinDex 聚合 Dream Skin 等完整 Codex 皮肤与原生轻量配色；通过 $skindex 发现、创作、投稿，并逐步统一安全切换。";
 
   return {
     metadataBase: new URL(canonicalOrigin),
@@ -29,13 +29,13 @@ export function generateMetadata(): Metadata {
       description,
       type: "website",
       url: canonicalOrigin,
-      images: [{ url: `${canonicalOrigin}/og.png`, width: 1672, height: 941, alt: "SkinDex — Codex 口袋皮肤图鉴" }],
+      images: [{ url: `${canonicalOrigin}/og-v2.png`, width: 1671, height: 941, alt: "SkinDex 完整皮肤聚合目录" }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [`${canonicalOrigin}/og.png`],
+      images: [`${canonicalOrigin}/og-v2.png`],
     },
   };
 }

@@ -7,6 +7,8 @@ import { capacityResponse, submissionCapacity } from "../../../lib/submission-gu
 import { validateThemeIdentity } from "../../../lib/theme-standard";
 
 const allowedPlatforms = new Set(["桌面端", "CLI", "全平台"]);
+const allowedEngines = new Set(["dream-skin", "skindex-native", "other"]);
+const allowedCapabilities = new Set(["background", "palette", "icons", "layout", "motion", "companion", "custom-ui"]);
 
 function isGitHubRepoUrl(value: string) {
   try {
@@ -41,6 +43,9 @@ export async function POST(request: Request) {
       notes?: string;
       website?: string;
       publicationConsent?: boolean;
+      engine?: string;
+      capabilities?: unknown;
+      verifiedInCodex?: boolean;
     };
     if (payload.website) return Response.json({ accepted: true }, { status: 202 });
 
@@ -49,6 +54,8 @@ export async function POST(request: Request) {
     const repoUrl = payload.repoUrl?.trim().replace(/\/$/, "") ?? "";
     const platform = payload.platform?.trim() ?? "";
     const notes = payload.notes?.trim().slice(0, 500) ?? "";
+    const engine = payload.engine?.trim() ?? "dream-skin";
+    const capabilities = Array.isArray(payload.capabilities) ? [...new Set(payload.capabilities.map(String))] : [];
 
     if (payload.publicationConsent !== true) {
       return Response.json({ error: "提交前需要确认：仓库信息仅在审核通过后公开" }, { status: 400 });
@@ -62,6 +69,10 @@ export async function POST(request: Request) {
     if (!allowedPlatforms.has(platform)) {
       return Response.json({ error: "不支持的平台类型" }, { status: 400 });
     }
+    if (!allowedEngines.has(engine)) return Response.json({ error: "不支持的皮肤引擎" }, { status: 400 });
+    if (!capabilities.length || capabilities.length > 7 || capabilities.some((item) => !allowedCapabilities.has(item))) {
+      return Response.json({ error: "请至少选择一项真实可用的皮肤能力" }, { status: 400 });
+    }
 
     const id = crypto.randomUUID();
     await getDb().insert(submissions).values({
@@ -70,6 +81,9 @@ export async function POST(request: Request) {
       authorName,
       repoUrl,
       platform,
+      engine,
+      capabilities: JSON.stringify(capabilities),
+      verifiedInCodex: payload.verifiedInCodex === true,
       notes,
       status: PENDING_REVIEW_STATUS,
     });

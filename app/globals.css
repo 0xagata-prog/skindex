@@ -113,6 +113,7 @@ main { min-height: 100vh; overflow: hidden; }
 .preview-button { position: relative; display: block; width: 100%; padding: 13px; border: 0; border-bottom: 1px solid var(--line); background: #f0f1f7; cursor: pointer; text-align: left; }
 .theme-status-pill { position: absolute; top: 24px; right: 24px; z-index: 2; display: inline-flex; align-items: center; min-height: 26px; border-radius: 999px; padding: 0 10px; color: #2e6547; background: rgba(241,255,247,.94); box-shadow: 0 5px 16px rgba(23,26,43,.13); font: 650 9px/1 var(--font-geist-mono); backdrop-filter: blur(8px); }
 .theme-status-pill.is-partial { color: #805b1d; background: rgba(255,249,235,.95); }
+.theme-status-pill.is-full-skin-source { color: #fff; background: rgba(81,65,185,.92); }
 .theme-status-pill.is-adapter-pending { color: #5f6270; background: rgba(247,247,250,.94); }
 .preview-action { position: absolute; right: 25px; bottom: 23px; transform: translateY(7px); opacity: 0; border-radius: 999px; background: white; color: var(--ink); padding: 8px 11px; box-shadow: 0 6px 20px rgba(0,0,0,.15); font-size: 10px; transition: .2s ease; }
 .preview-button:hover .preview-action, .preview-button:focus-visible .preview-action { transform: translateY(0); opacity: 1; }
@@ -252,6 +253,10 @@ footer a:hover { color: var(--purple); }
 .submit-modal form label:nth-child(3), .submit-modal form .notes-field, .submit-modal form .review-consent, .submit-modal form button, .form-error { grid-column: 1 / -1; }
 .submit-modal form .review-consent { display: grid; grid-template-columns: 18px 1fr; gap: 10px; align-items: start; border: 1px solid #d8d9e3; border-radius: 10px; padding: 12px; background: #f8f8fb; font-weight: 500; line-height: 1.55; }
 .submit-modal form .review-consent input { width: 16px; height: 16px; margin: 1px 0 0; accent-color: var(--purple); }
+.submit-modal form .capability-field { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; margin: 0; border: 1px solid #d8d9e3; border-radius: 10px; padding: 12px; }
+.submit-modal form .capability-field legend { padding: 0 5px; color: #565968; font-size: 11px; font-weight: 650; }
+.submit-modal form .capability-field label { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #e1e2eb; border-radius: 999px; padding: 7px 10px; background: #fafafe; font-weight: 500; }
+.submit-modal form .capability-field input { width: 14px; height: 14px; margin: 0; accent-color: var(--purple); }
 .submit-modal form button:disabled { cursor: wait; opacity: .65; }
 .honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
 .form-error { margin: 0; border-radius: 10px; padding: 10px 12px; color: #a43620; background: #fff0ec; font-size: 11px; }

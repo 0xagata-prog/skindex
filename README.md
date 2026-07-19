@@ -1,6 +1,6 @@
 # SkinDex
 
-Codex 口袋皮肤图鉴：在一个目录里发现真实主题，用 `$skindex` 推荐、生成、安全导入和投稿主题。
+Codex 口袋皮肤图鉴：聚合 Dream Skin 等完整皮肤与原生轻量配色，用 `$skindex` 发现、创作、投稿并逐步统一切换。
 
 - 官网：<https://codex-skindex.vercel.app/>
 - Skill 源码：[skill](skill)
@@ -12,7 +12,7 @@ Codex 口袋皮肤图鉴：在一个目录里发现真实主题，用 `$skindex`
 
 ```text
 $skill-installer
-请从 https://github.com/0xagata-prog/skindex/tree/v0.5.2/skill 安装官方 SkinDex Skill，并将它安装为 skindex。
+请从 https://github.com/0xagata-prog/skindex/tree/v0.6.0/skill 安装官方 SkinDex Skill，并将它安装为 skindex。
 ```
 
 安装完成后开启新对话：
@@ -26,9 +26,9 @@ $skindex 参考我发的图片生成一个原创主题。
 
 ## 产品边界
 
-- 官网是实时目录、Manifest API 和审核入口；GitHub 是 Skill 的唯一源码和版本源。
+- 官网是完整皮肤/轻量配色的实时目录、审核和聚合入口；GitHub 是 Skill 的唯一源码和版本源。
 - 主题导入先验证来源和兼容性，创建恢复点，复制设置并打开 Codex；最终外观修改仍由用户确认一次。
-- `.codexskin` 与 Codex Styler 适配器尚未开放，只展示可追溯来源。
+- Codex Dream Skin 是当前完整皮肤核心运行基座；v0.6 先支持发现、能力标注和投稿，SkinDex 自有的一键运行时适配器尚未开放。
 - 生成主题默认只保存在本地；明确确认后才进入私有审核队列，审核通过才公开。
 - 插件版等正式上架后再开放，当前只分发独立 Skill。
 

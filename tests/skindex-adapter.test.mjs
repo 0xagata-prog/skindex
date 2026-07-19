@@ -249,6 +249,13 @@ test("classifies catalog actions by verified adapter support", () => {
   });
   assert.equal(getThemeInstallability({ sourceRepo: "skindex/lab", verifiedVersion: "codex-theme-v1" }).supportLevel, "partial");
   assert.equal(getThemeInstallability({ sourceRepo: "Wangnov/awesome-codex-skins", verifiedVersion: "codexskin-v1" }).action, "view-source");
+  assert.deepEqual(getThemeInstallability({ sourceRepo: "Fei-Away/Codex-Dream-Skin", verifiedVersion: "Dream Skin CDP" }), {
+    supportLevel: "full-skin-source",
+    adapter: "dream-skin-runtime-v1",
+    action: "view-source",
+    requiresUserConfirmation: true,
+    rollback: "upstream-restore",
+  });
 });
 
 test("refuses generated-theme upload without explicit consent", async () => {
@@ -304,6 +311,10 @@ test("marks consented proposal requests as SkinDex Skill traffic", async () => {
     palette: "#111111,#EEEEEE,#635BFF",
     previewPath,
     consent: "yes",
+    engine: "dream-skin",
+    capabilities: "background,layout",
+    sourceUrl: "https://github.com/example/theme",
+    verifiedInCodex: true,
     fetchImpl: async (_url, init) => {
       clientHeader = init.headers["X-SkinDex-Client"];
       return Response.json({ proposal: { id: "proposal-id", status: "pending" } }, { status: 201 });
