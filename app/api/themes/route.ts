@@ -43,6 +43,13 @@ function catalogFilter(filter: string) {
   return undefined;
 }
 
+function catalogEligibilityCondition() {
+  return or(
+    like(themes.verifiedVersion, "%codex-theme-v1%"),
+    eq(themes.sourceRepo, "Fei-Away/Codex-Dream-Skin"),
+  );
+}
+
 export async function GET(request: Request) {
   try {
     await ensureThemeData();
@@ -91,7 +98,12 @@ export async function GET(request: Request) {
         like(sql`lower(${themes.tags})`, queryPattern),
       )
       : undefined;
-    const publicCondition = eq(themes.status, APPROVED_THEME_STATUS);
+    // Keep source-only themes editable in the owner backend, but do not present
+    // them as usable catalog inventory until an audited adapter exists.
+    const publicCondition = and(
+      eq(themes.status, APPROVED_THEME_STATUS),
+      catalogEligibilityCondition(),
+    );
     const matchedCondition = and(publicCondition, catalogFilter(filter), searchCondition);
 
     const [[matchedCount], [catalogStats], [featuredRow]] = await Promise.all([

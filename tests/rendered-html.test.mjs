@@ -91,6 +91,8 @@ test("paginates the catalog on the server and fixes the publishing format", asyn
   assert.match(themesRoute, /\.offset\(pagination\.offset\)/);
   assert.match(themesRoute, /countDistinct\(themes\.sourceRepo\)/);
   assert.match(themesRoute, /catalogFilter\(filter\)/);
+  assert.match(themesRoute, /catalogEligibilityCondition\(\)/);
+  assert.match(themesRoute, /Fei-Away\/Codex-Dream-Skin/);
   assert.match(themesRoute, /themes\.description/);
   assert.match(page, /catalog-pagination/);
   assert.match(page, /window\.history\.replaceState/);
