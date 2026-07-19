@@ -10,7 +10,7 @@ export function getThemeInstallability(theme: ThemeCapabilityInput) {
     return {
       supportLevel: "full-skin-source" as const,
       adapter: "dream-skin-runtime-v1" as const,
-      action: "view-source" as const,
+      action: "runtime-install" as const,
       requiresUserConfirmation: true,
       rollback: "upstream-restore" as const,
     };

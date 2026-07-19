@@ -18,8 +18,8 @@ test("uses Codex Skill Installer with GitHub as the canonical source", async () 
   assert.match(page, /我已安装：在 Codex 中打开主题/);
   assert.match(page, /\$skill-installer/);
   assert.match(page, /github\.com\/0xagata-prog\/skindex/);
-  assert.match(page, /skillSourceUrl = `\$\{githubRepoUrl\}\/tree\/v0\.6\.0\/skill`/);
-  assert.match(page, /SKINDEX_SKILL_READY_KEY = "skindex-skill-ready-v3"/);
+  assert.match(page, /skillSourceUrl = `\$\{githubRepoUrl\}\/tree\/v0\.7\.0\/skill`/);
+  assert.match(page, /SKINDEX_SKILL_READY_KEY = "skindex-skill-ready-v4"/);
   assert.match(page, /return codexPromptUrl\(`\$skindex/);
   assert.doesNotMatch(page, /若不存在，立即停止/);
   assert.doesNotMatch(page, /先验证 Manifest、来源、兼容性与适配器/);
@@ -46,6 +46,7 @@ test("routes theme actions through declared support levels", async () => {
   assert.match(capability, /"full-skin-source" \| "native" \| "partial" \| "adapter-pending"/);
   assert.match(capability, /Fei-Away\/Codex-Dream-Skin/);
   assert.match(capability, /action: "guided-import"/);
+  assert.match(capability, /action: "runtime-install"/);
   assert.match(capability, /action: "view-source"/);
   assert.match(page, /requestThemeUse\(selected\)/);
   assert.match(page, /openInstall\(selected\)/);
@@ -55,6 +56,8 @@ test("routes theme actions through declared support levels", async () => {
   assert.match(page, /navigator\.clipboard\.writeText\(buildNativeThemePayload\(theme\)\)/);
   assert.match(page, /clipboardPrepared/);
   assert.match(page, /themeRevision: theme\.updatedAt/);
+  assert.match(page, /runtimePlanUrl/);
+  assert.match(page, /完整皮肤 · macOS/);
   assert.match(page, /暂不支持导入/);
   assert.doesNotMatch(page, /查看兼容状态/);
   assert.match(page, /theme-status-pill/);
@@ -67,6 +70,7 @@ test("routes theme actions through declared support levels", async () => {
   assert.match(skill, /codex:\/\/settings/);
   assert.match(skill, /clipboardPrepared: true/);
   assert.match(skill, /themeRevision/);
+  assert.match(skill, /runtime-install --theme/);
   assert.match(skill, /do \*\*not\*\* print the theme payload/);
 });
 

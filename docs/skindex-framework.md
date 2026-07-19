@@ -21,7 +21,7 @@
 
 | 等级 | 主题卡操作 | 行为 |
 | --- | --- | --- |
-| `full-skin-source` | 查看完整皮肤 | 上游真实成品可用；SkinDex 自有安全适配器尚未完成 |
+| `full-skin-source` | 用 SkinDex 安装 | 审核过的完整皮肤通过固定版本运行时安装、切换与恢复；v1 先支持 macOS |
 | `native` | 在 Codex 中使用 | 完整走原生验证、暂存、确认和恢复流程 |
 | `partial` | 在 Codex 中应用配色 | 只导入原生配色，明确排除布局、角色或动画概念 |
 | `adapter-pending` | 查看兼容状态 | 只展示可追溯来源，不执行第三方安装器 |
@@ -51,7 +51,7 @@
 ## 当前边界
 
 - `codex-theme-v1 → codex-native-v1` 已可验证、暂存和恢复。
-- Dream Skin 完整皮肤在 v0.6 支持发现、能力标注和投稿，但 SkinDex 尚不自动安装或控制其 CDP 运行时。
+- Dream Skin 完整皮肤在 v0.7 对 macOS 审核预设开放固定仓库、固定提交的一键安装、切换与恢复；每次执行前都保留用户确认。
 - `.codexskin` 与 Codex Styler 仍只识别格式，不自动执行。
 - Codex 没有公开的主题安装深链；SkinDex 使用官方 `codex://settings` 打开设置，但最终导入仍需用户在 Appearance 中确认。
 - 插件尚未进入公开 Plugins Directory，官网现在不宣传或分发插件包。
@@ -71,4 +71,4 @@
 1. 在全新 Codex 环境完成独立 Skill 压缩包的首次安装测试。
 2. 准备公开插件审核所需的隐私政策、条款、支持页、5 个正向与 3 个负向测试。
 3. 提交 skills-only 插件审核；通过后再将官网按钮升级为公开目录安装。
-4. 优先为 Dream Skin 建立可信、可回滚的 SkinDex Runtime 适配器，再评估其他格式。
+4. 完成 Dream Skin Windows 等价切换接口的上游核验后，再扩展平台与更多审核预设。

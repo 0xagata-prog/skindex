@@ -2,7 +2,7 @@
 
 import { createHash, randomUUID } from "node:crypto";
 import { constants as fsConstants } from "node:fs";
-import { access, mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { access, lstat, mkdir, readFile, realpath, rename, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -16,7 +16,12 @@ const FORMAT_ADAPTERS = Object.freeze({
 
 const AVAILABLE_ADAPTERS = new Set(["codex-native-v1"]);
 const DEFAULT_ENDPOINT = "https://codex-skindex.vercel.app";
-const SKILL_VERSION = "0.6.0";
+const SKILL_VERSION = "0.7.0";
+const DREAM_SKIN_REPOSITORY = "https://github.com/Fei-Away/Codex-Dream-Skin";
+const DREAM_SKIN_REVISION = "3af1d6d62f3a0388cc640d2f497ac3100998938e";
+const DREAM_SKIN_PRESETS = Object.freeze({
+  "gothic-void-crusade": "preset-gothic-void-crusade",
+});
 const SUBMISSION_ENGINES = new Set(["dream-skin", "skindex-native", "other"]);
 const SUBMISSION_CAPABILITIES = new Set(["background", "palette", "icons", "layout", "motion", "companion", "custom-ui"]);
 const FORBIDDEN_KEYS = new Set([
@@ -533,8 +538,8 @@ export async function catalogThemes({ endpoint = DEFAULT_ENDPOINT, query = "", f
       mode: theme.mode,
       nativeImport: String(theme.verifiedVersion ?? "").includes("codex-theme-v1"),
       install: theme.install ?? {
-        supportLevel: String(theme.verifiedVersion ?? "").includes("codex-theme-v1") ? "native" : "adapter-pending",
-        action: String(theme.verifiedVersion ?? "").includes("codex-theme-v1") ? "guided-import" : "view-source",
+        supportLevel: theme.sourceRepo === "Fei-Away/Codex-Dream-Skin" ? "full-skin-source" : String(theme.verifiedVersion ?? "").includes("codex-theme-v1") ? "native" : "adapter-pending",
+        action: theme.sourceRepo === "Fei-Away/Codex-Dream-Skin" ? "runtime-install" : String(theme.verifiedVersion ?? "").includes("codex-theme-v1") ? "guided-import" : "view-source",
       },
       source: theme.sourceName,
     })),
@@ -550,6 +555,148 @@ export async function fetchThemeManifest(themeId, outputPath, { endpoint = DEFAU
   await mkdir(path.dirname(resolved), { recursive: true });
   await writeFile(resolved, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
   return { status: "fetched", themeId, manifestPath: resolved, manifestUrl: url.toString() };
+}
+
+export function validateRuntimePlan(plan, expectedThemeId) {
+  const errors = [];
+  if (!isObject(plan)) return { ok: false, errors: ["runtime plan must be a JSON object"] };
+  rejectUnknownKeys(plan, new Set(["schemaVersion", "themeId", "name", "engine", "adapter", "platforms", "capabilities", "source", "runtime", "consent", "rollback", "catalogUrl"]), "runtime plan", errors);
+  rejectUnknownKeys(plan.source, new Set(["repository", "revision", "upstream"]), "runtime plan source", errors);
+  rejectUnknownKeys(plan.runtime, new Set(["presetId", "installRoot", "transport", "mutatesCodexBundle"]), "runtime plan runtime", errors);
+  rejectUnknownKeys(plan.consent, new Set(["installRequired", "applyRequired", "mayRestartCodex", "thirdPartyCode"]), "runtime plan consent", errors);
+  rejectUnknownKeys(plan.rollback, new Set(["supported", "adapter"]), "runtime plan rollback", errors);
+  if (plan.schemaVersion !== "skindex/runtime-plan/v1") errors.push("unsupported runtime plan schema");
+  if (plan.themeId !== expectedThemeId || DREAM_SKIN_PRESETS[plan.themeId] !== plan.runtime?.presetId) errors.push("runtime theme or preset is not allowlisted");
+  if (plan.engine !== "dream-skin" || plan.adapter !== "dream-skin-runtime-v1") errors.push("runtime adapter is not allowlisted");
+  if (plan.source?.repository !== DREAM_SKIN_REPOSITORY || plan.source?.revision !== DREAM_SKIN_REVISION || plan.source?.upstream !== true) errors.push("runtime source is not the pinned Dream Skin revision");
+  if (!Array.isArray(plan.platforms) || plan.platforms.length !== 1 || plan.platforms[0] !== "macos") errors.push("runtime plan must currently target macOS only");
+  if (plan.runtime?.installRoot !== "~/.codex/codex-dream-skin-studio" || plan.runtime?.transport !== "loopback-cdp" || plan.runtime?.mutatesCodexBundle !== false) errors.push("runtime boundary is invalid");
+  if (plan.consent?.installRequired !== true || plan.consent?.applyRequired !== true || plan.consent?.thirdPartyCode !== true) errors.push("runtime consent boundary is invalid");
+  if (plan.rollback?.supported !== true || plan.rollback?.adapter !== "upstream-restore") errors.push("runtime rollback boundary is invalid");
+  if (!isHttps(plan.catalogUrl)) errors.push("catalogUrl must use HTTPS");
+  if (findForbiddenKeys(plan).length) errors.push("runtime plan must not contain executable fields");
+  return { ok: errors.length === 0, errors };
+}
+
+export async function fetchRuntimePlan(themeId, { endpoint = DEFAULT_ENDPOINT, fetchImpl = fetch } = {}) {
+  if (!DREAM_SKIN_PRESETS[themeId]) throw new Error("theme is not connected to the Dream Skin runtime");
+  const url = endpointUrl(endpoint, "/api/themes", { format: "runtime-plan", id: themeId });
+  const plan = await responseJson(await fetchImpl(url));
+  const validation = validateRuntimePlan(plan, themeId);
+  if (!validation.ok) throw new Error(validation.errors.join("; "));
+  return { plan, runtimePlanUrl: url.toString() };
+}
+
+function dreamSkinPaths({ home = homedir(), stateRoot = stateRootFromEnvironment() } = {}) {
+  const installRoot = path.join(home, ".codex", "codex-dream-skin-studio");
+  return {
+    installRoot,
+    sourceRoot: path.join(stateRoot, "runtimes", "dream-skin", DREAM_SKIN_REVISION),
+    switchScript: path.join(installRoot, "scripts", "switch-theme-macos.sh"),
+    restoreScript: path.join(installRoot, "scripts", "restore-dream-skin-macos.sh"),
+  };
+}
+
+async function trustedRegularFile(filePath, trustedRoot) {
+  const rootStat = await lstat(trustedRoot);
+  const fileStat = await lstat(filePath);
+  if (rootStat.isSymbolicLink() || fileStat.isSymbolicLink()) throw new Error("runtime paths must not be symbolic links");
+  const root = await realpath(trustedRoot);
+  const resolved = await realpath(filePath);
+  const stat = await lstat(resolved);
+  if (!stat.isFile() || resolved !== root && !resolved.startsWith(`${root}${path.sep}`)) throw new Error("runtime script escaped its trusted directory");
+  return resolved;
+}
+
+function runChecked(spawnImpl, command, args, options = {}) {
+  const result = spawnImpl(command, args, { encoding: "utf8", ...options });
+  if (result.error || result.status !== 0) {
+    const detail = String(result.stderr || result.error?.message || "runtime command failed").trim();
+    throw new Error(detail || "runtime command failed");
+  }
+  return String(result.stdout || "").trim();
+}
+
+function requireMac(platform) {
+  if (platform !== "darwin") throw new Error("Dream Skin 一键运行时当前仅支持 macOS；Windows 适配尚未开放");
+}
+
+export async function dreamSkinRuntimeStatus({ home = homedir(), stateRoot = stateRootFromEnvironment(), platform = process.platform } = {}) {
+  const paths = dreamSkinPaths({ home, stateRoot });
+  if (platform !== "darwin") return { status: "unsupported", engine: "dream-skin", platform: osName(platform), supportedPlatforms: ["macos"] };
+  try {
+    await trustedRegularFile(paths.switchScript, paths.installRoot);
+    await trustedRegularFile(paths.restoreScript, paths.installRoot);
+    return { status: "installed", engine: "dream-skin", platform: "macos", installRoot: paths.installRoot, pinnedRevision: DREAM_SKIN_REVISION };
+  } catch (error) {
+    if (error?.code !== "ENOENT") throw error;
+    return { status: "not-installed", engine: "dream-skin", platform: "macos", installRoot: paths.installRoot, pinnedRevision: DREAM_SKIN_REVISION };
+  }
+}
+
+export async function installDreamSkinRuntime(themeId, {
+  consent,
+  endpoint = DEFAULT_ENDPOINT,
+  fetchImpl = fetch,
+  spawnImpl = spawnSync,
+  home = homedir(),
+  stateRoot = stateRootFromEnvironment(),
+  platform = process.platform,
+} = {}) {
+  requireMac(platform);
+  if (consent !== "yes") throw new Error("安装第三方 Dream Skin 运行引擎前必须明确使用 --consent yes");
+  const { plan } = await fetchRuntimePlan(themeId, { endpoint, fetchImpl });
+  const paths = dreamSkinPaths({ home, stateRoot });
+  await mkdir(paths.sourceRoot, { recursive: true });
+  try {
+    await access(path.join(paths.sourceRoot, ".git"), fsConstants.F_OK);
+  } catch {
+    runChecked(spawnImpl, "git", ["init", paths.sourceRoot]);
+    runChecked(spawnImpl, "git", ["-C", paths.sourceRoot, "remote", "add", "origin", DREAM_SKIN_REPOSITORY]);
+  }
+  const remote = runChecked(spawnImpl, "git", ["-C", paths.sourceRoot, "remote", "get-url", "origin"]);
+  if (remote !== DREAM_SKIN_REPOSITORY) throw new Error("Dream Skin source remote does not match the allowlist");
+  runChecked(spawnImpl, "git", ["-C", paths.sourceRoot, "fetch", "--depth", "1", "origin", DREAM_SKIN_REVISION]);
+  runChecked(spawnImpl, "git", ["-C", paths.sourceRoot, "checkout", "--detach", "FETCH_HEAD"]);
+  const revision = runChecked(spawnImpl, "git", ["-C", paths.sourceRoot, "rev-parse", "HEAD"]);
+  if (revision !== DREAM_SKIN_REVISION) throw new Error("Dream Skin checkout did not match the pinned revision");
+  const installer = await trustedRegularFile(path.join(paths.sourceRoot, "macos", "scripts", "install-dream-skin-macos.sh"), paths.sourceRoot);
+  runChecked(spawnImpl, "bash", [installer, "--no-launchers", "--no-launch"]);
+  const status = await dreamSkinRuntimeStatus({ home, stateRoot, platform });
+  if (status.status !== "installed") throw new Error("Dream Skin installer finished but the verified runtime scripts are missing");
+  return { status: "installed", themeId, engine: plan.engine, sourceRevision: revision, installRoot: paths.installRoot, nextAction: "runtime-apply" };
+}
+
+export async function applyDreamSkinTheme(themeId, {
+  consent,
+  spawnImpl = spawnSync,
+  home = homedir(),
+  stateRoot = stateRootFromEnvironment(),
+  platform = process.platform,
+} = {}) {
+  requireMac(platform);
+  if (consent !== "yes") throw new Error("切换完整皮肤可能重启 Codex；必须明确使用 --consent yes");
+  const presetId = DREAM_SKIN_PRESETS[themeId];
+  if (!presetId) throw new Error("theme is not connected to the Dream Skin runtime");
+  const paths = dreamSkinPaths({ home, stateRoot });
+  const script = await trustedRegularFile(paths.switchScript, paths.installRoot);
+  runChecked(spawnImpl, "bash", [script, "--id", presetId]);
+  return { status: "applied", themeId, presetId, engine: "dream-skin", rollback: "runtime-restore" };
+}
+
+export async function restoreDreamSkinRuntime({
+  consent,
+  spawnImpl = spawnSync,
+  home = homedir(),
+  stateRoot = stateRootFromEnvironment(),
+  platform = process.platform,
+} = {}) {
+  requireMac(platform);
+  if (consent !== "yes") throw new Error("恢复 Dream Skin 并重启 Codex 前必须明确使用 --consent yes");
+  const paths = dreamSkinPaths({ home, stateRoot });
+  const script = await trustedRegularFile(paths.restoreScript, paths.installRoot);
+  runChecked(spawnImpl, "bash", [script, "--restore-base-theme", "--restart-codex"]);
+  return { status: "restored", engine: "dream-skin", nextAction: "verify-codex-default" };
 }
 
 function validHex(value) {
@@ -700,6 +847,22 @@ async function main() {
   } else if (command === "fetch") {
     if (!flags.theme || !flags.output) throw new Error("--theme and --output are required");
     result = await fetchThemeManifest(flags.theme, flags.output, { endpoint: flags.endpoint });
+  } else if (command === "runtime-plan") {
+    if (!flags.theme) throw new Error("--theme is required");
+    const fetched = await fetchRuntimePlan(flags.theme, { endpoint: flags.endpoint });
+    const status = await dreamSkinRuntimeStatus(options);
+    result = { ...fetched, status };
+  } else if (command === "runtime-status") {
+    result = await dreamSkinRuntimeStatus(options);
+  } else if (command === "runtime-install") {
+    if (!flags.theme || !flags.consent) throw new Error("--theme and --consent are required");
+    result = await installDreamSkinRuntime(flags.theme, { ...options, consent: flags.consent, endpoint: flags.endpoint });
+  } else if (command === "runtime-apply") {
+    if (!flags.theme || !flags.consent) throw new Error("--theme and --consent are required");
+    result = await applyDreamSkinTheme(flags.theme, { ...options, consent: flags.consent });
+  } else if (command === "runtime-restore") {
+    if (!flags.consent) throw new Error("--consent is required");
+    result = await restoreDreamSkinRuntime({ ...options, consent: flags.consent });
   } else if (command === "create") {
     for (const required of ["id", "name", "author", "surface", "ink", "accent", "output"]) {
       if (!flags[required]) throw new Error(`--${required} is required`);
@@ -736,7 +899,7 @@ async function main() {
       endpoint: flags.endpoint,
     });
   } else {
-    throw new Error("command must be catalog, fetch, create, validate, plan, stage, copy, confirm, restore, status, or submit");
+    throw new Error("command must be catalog, fetch, create, validate, plan, stage, copy, confirm, restore, status, runtime-plan, runtime-status, runtime-install, runtime-apply, runtime-restore, or submit");
   }
 
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);

@@ -29,7 +29,7 @@ type Theme = {
   install?: {
     supportLevel: ThemeSupportLevel;
     adapter: "dream-skin-runtime-v1" | "codex-native-v1" | "codexskin-runtime-v1" | "codex-styler-v1";
-    action: "guided-import" | "view-source";
+    action: "guided-import" | "runtime-install" | "view-source";
     requiresUserConfirmation: true;
     rollback: "restore-point" | "upstream-restore" | "unavailable";
   };
@@ -72,9 +72,9 @@ type InstallGuide = {
 const filters = ["全部", "完整皮肤", "轻量配色", "桌面端", "CLI", "深色", "浅色", "双模式"] as const;
 
 const githubRepoUrl = "https://github.com/0xagata-prog/skindex";
-const skillSourceUrl = `${githubRepoUrl}/tree/v0.6.0/skill`;
+const skillSourceUrl = `${githubRepoUrl}/tree/v0.7.0/skill`;
 const skindexOrigin = "https://codex-skindex.vercel.app";
-const SKINDEX_SKILL_READY_KEY = "skindex-skill-ready-v3";
+const SKINDEX_SKILL_READY_KEY = "skindex-skill-ready-v4";
 const SKINDEX_SAVED_KEY = "skindex-saved-v1";
 const emptyPagination: CatalogPagination = { page: 1, pageSize: 24, total: 0, totalPages: 0, hasPrevious: false, hasNext: false };
 
@@ -103,13 +103,16 @@ function skillInstallerChatUrl() {
 }
 
 function themeUseChatUrl(theme: Theme, clipboardPrepared: boolean) {
+  const action = (theme.install ?? getThemeInstallability(theme)).action;
   const request = JSON.stringify({
     version: "1",
-    action: "install",
+    action: action === "runtime-install" ? "runtime-install" : "install",
     themeId: theme.id,
-    manifestUrl: `${skindexOrigin}/api/themes?format=manifest&id=${encodeURIComponent(theme.id)}`,
+    ...(action === "runtime-install"
+      ? { runtimePlanUrl: `${skindexOrigin}/api/themes?format=runtime-plan&id=${encodeURIComponent(theme.id)}` }
+      : { manifestUrl: `${skindexOrigin}/api/themes?format=manifest&id=${encodeURIComponent(theme.id)}` }),
     themeRevision: theme.updatedAt,
-    clipboardPrepared,
+    ...(action === "guided-import" ? { clipboardPrepared } : {}),
   });
   return codexPromptUrl(`$skindex
 安装官网主题“${theme.name}”。
@@ -121,17 +124,17 @@ function getInstallGuide(theme: Theme): InstallGuide {
   if (install.supportLevel === "full-skin-source") {
     return {
       kind: "skin",
-      buttonLabel: "查看完整皮肤",
-      eyebrow: "完整皮肤 · Dream Skin",
-      title: `${theme.name} 已有真实运行版本`,
-      description: "这不是一张概念图，也不只是换颜色：源项目通过本机 CDP 提供连续背景、原生交互控件、主题切换和恢复。SkinDex 正在为它建设统一审核与安全适配器，完成前先保留原项目安装边界。",
-      steps: ["查看真实预览、平台说明与素材权利", "按源项目说明安装或切换", "等待 SkinDex Runtime 完成统一的一键流程"],
+      buttonLabel: "用 SkinDex 安装",
+      eyebrow: "完整皮肤 · macOS 可安装",
+      title: `安全安装 ${theme.name}`,
+      description: "SkinDex 会先检测 Dream Skin。首次使用时，你确认后才会从固定版本安装第三方运行引擎；随后应用完整背景与界面效果，并保留一键恢复。当前稳定适配仅支持 macOS。",
+      steps: ["检测本机 Dream Skin 与 macOS 兼容性", "首次安装前确认第三方引擎与可能重启", "应用官网预设；随时可让 $skindex 恢复"],
       primaryUrl: theme.sourceUrl,
       primaryLabel: "打开 Dream Skin ↗",
       secondaryUrl: theme.downloadUrl,
       secondaryLabel: "查看快速开始 ↗",
-      canUseInCodex: false,
-      statusLabel: "完整皮肤 · 源项目可用",
+      canUseInCodex: true,
+      statusLabel: "完整皮肤 · macOS",
       supportLevel: install.supportLevel,
     };
   }
@@ -621,7 +624,7 @@ export default function Home() {
               </div>
               <div className="detail-actions">
                 {getInstallGuide(selected).canUseInCodex ? (
-                  <button className="primary-action" onClick={() => requestThemeUse(selected)}>{skillReady ? "用 SkinDex 快捷导入" : "安装 SkinDex 后导入"} →</button>
+                  <button className="primary-action" onClick={() => requestThemeUse(selected)}>{skillReady ? getInstallGuide(selected).buttonLabel : "安装 SkinDex 后使用"} →</button>
                 ) : (
                   <button className="primary-action is-secondary" onClick={() => openInstall(selected)}>查看适配说明 →</button>
                 )}
@@ -661,7 +664,7 @@ export default function Home() {
                   <a className="install-secondary" href={guide.secondaryUrl} target="_blank" rel="noreferrer">{guide.secondaryLabel}</a>
                 </div>
               )}
-              <p className="install-source">{guide.kind === "copy" ? "推荐使用 SkinDex 流程，它会创建恢复点。手动复制只作为备用，不会记录 SkinDex 恢复点；两种方式都需要你在 Codex 内确认。" : "本站只展示可追溯的原始来源，不重新打包、不执行第三方文件，也不声称当前已经支持一键导入。"}</p>
+              <p className="install-source">{guide.kind === "copy" ? "推荐使用 SkinDex 流程，它会创建恢复点。手动复制只作为备用，不会记录 SkinDex 恢复点；两种方式都需要你在 Codex 内确认。" : guide.canUseInCodex ? "SkinDex 只执行固定仓库和固定版本的审核脚本；安装第三方运行引擎、应用皮肤和恢复都会在 Codex 中说明影响并取得确认。" : "本站只展示可追溯的原始来源，不重新打包、不执行第三方文件，也不声称当前已经支持一键导入。"}</p>
             </section>
           </div>
         );
@@ -672,7 +675,7 @@ export default function Home() {
           <section className="skill-gate-modal" role="dialog" aria-modal="true" aria-labelledby="skill-gate-title" onMouseDown={(event) => event.stopPropagation()}>
             <button className="modal-close" onClick={() => setPendingTheme(null)} aria-label="关闭 SkinDex 安装确认">×</button>
             <span className="section-index">FIRST USE · INSTALL CHECK</span>
-            <h2 id="skill-gate-title">使用主题前，先确认 SkinDex v0.6.0</h2>
+            <h2 id="skill-gate-title">使用主题前，先确认 SkinDex v0.7.0</h2>
             <p>官网无法读取你电脑上的 Codex 技能列表。未安装时直接打开主题，会让 Codex 无效搜索并浪费时间；请选择你的真实状态。</p>
             <div className="skill-gate-options">
               <button className="install-primary" onClick={() => setSkillInstallOpen(true)}>安装或更新 SkinDex →</button>
