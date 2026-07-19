@@ -16,7 +16,7 @@ function parseList(value: string): string[] {
   }
 }
 
-const allowedFilters = new Set(["全部", "桌面端", "CLI", "深色", "浅色", "双模式"]);
+const allowedFilters = new Set(["全部", "完整皮肤", "轻量配色", "桌面端", "CLI", "深色", "浅色", "双模式"]);
 
 function serializeTheme(theme: typeof themes.$inferSelect) {
   return {
@@ -28,6 +28,12 @@ function serializeTheme(theme: typeof themes.$inferSelect) {
 }
 
 function catalogFilter(filter: string) {
+  if (filter === "完整皮肤") return or(
+    eq(themes.sourceRepo, "Fei-Away/Codex-Dream-Skin"),
+    eq(themes.sourceRepo, "Wangnov/awesome-codex-skins"),
+    eq(themes.sourceRepo, "xuhuanstudio/codex-styler"),
+  );
+  if (filter === "轻量配色") return like(themes.verifiedVersion, "%codex-theme-v1%");
   if (filter === "桌面端") return or(eq(themes.platform, "桌面端"), eq(themes.platform, "全平台"));
   if (filter === "CLI") return or(eq(themes.platform, "CLI"), eq(themes.platform, "全平台"));
   if (filter === "深色") return or(eq(themes.mode, "深色"), eq(themes.mode, "双模式"));

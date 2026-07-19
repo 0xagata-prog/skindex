@@ -24,8 +24,30 @@ type SeedTheme = {
 
 const materialBase = "https://raw.githubusercontent.com/robinli/codex-material-themes/main/public/themes";
 const skinBase = "https://raw.githubusercontent.com/Wangnov/awesome-codex-skins/main/skins";
+const dreamSkinBase = "https://raw.githubusercontent.com/Fei-Away/Codex-Dream-Skin/main";
 
 export const seedThemes: SeedTheme[] = [
+  {
+    id: "gothic-void-crusade",
+    name: "哥特虚空远征 · Gothic Void Crusade",
+    author: "seansong-ideogram × Fei-Away",
+    authorUrl: "https://github.com/Fei-Away/Codex-Dream-Skin",
+    platform: "桌面端",
+    mode: "深色",
+    description: "Dream Skin 实测精选预设：连续背景层、原生可交互控件、主题切换与一键恢复；当前由源项目运行，SkinDex 安全适配器尚在建设。",
+    tags: ["完整皮肤", "Dream Skin", "实机验证", "运行时来源"],
+    palette: ["#08070D", "#DDD4C8", "#9D7B52"],
+    previewUrl: `${dreamSkinBase}/docs/images/presets/gothic-void-crusade-preview.jpg`,
+    sourceUrl: "https://github.com/Fei-Away/Codex-Dream-Skin",
+    downloadUrl: "https://github.com/Fei-Away/Codex-Dream-Skin#快速开始",
+    sourceName: "Codex Dream Skin",
+    sourceRepo: "Fei-Away/Codex-Dream-Skin",
+    stars: 9992,
+    license: "MIT（macOS 代码）/ 素材见原仓库",
+    verifiedVersion: "Dream Skin CDP · macOS / Windows",
+    featured: true,
+    updatedAt: "2026-07-19T16:57:06+08:00",
+  },
   {
     id: "blue-messenger-2007",
     name: "蓝色信使 2007 · Blue Messenger 2007",
@@ -322,7 +344,7 @@ export const seedThemes: SeedTheme[] = [
   },
 ];
 
-const SEED_VERSION = "2026-07-18-v2";
+const SEED_VERSION = "2026-07-19-dream-skin-v1";
 let themeDataReady: Promise<void> | undefined;
 
 async function setupThemeData() {
@@ -392,6 +414,25 @@ async function setupThemeData() {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP NOT NULL
     )`),
     d1.prepare("CREATE INDEX IF NOT EXISTS theme_revisions_theme_idx ON theme_revisions (theme_id, created_at)"),
+  ]);
+
+  const ensureColumns = async (table: string, columns: Array<{ name: string; definition: string }>) => {
+    const existing = await d1.prepare(`PRAGMA table_info(${table})`).all<{ name: string }>();
+    const names = new Set(existing.results.map((column) => column.name));
+    for (const column of columns) {
+      if (!names.has(column.name)) await d1.prepare(`ALTER TABLE ${table} ADD COLUMN ${column.definition}`).run();
+    }
+  };
+  await ensureColumns("submissions", [
+    { name: "engine", definition: "engine TEXT DEFAULT 'dream-skin' NOT NULL" },
+    { name: "capabilities", definition: "capabilities TEXT DEFAULT '[]' NOT NULL" },
+    { name: "verified_in_codex", definition: "verified_in_codex INTEGER DEFAULT 0 NOT NULL" },
+  ]);
+  await ensureColumns("theme_proposals", [
+    { name: "engine", definition: "engine TEXT DEFAULT 'skindex-native' NOT NULL" },
+    { name: "capabilities", definition: "capabilities TEXT DEFAULT '[]' NOT NULL" },
+    { name: "source_url", definition: "source_url TEXT DEFAULT '' NOT NULL" },
+    { name: "verified_in_codex", definition: "verified_in_codex INTEGER DEFAULT 0 NOT NULL" },
   ]);
 
   const currentSeed = await d1.prepare("SELECT value FROM catalog_meta WHERE key = 'seed_version'").first<{ value: string }>();

@@ -28,10 +28,10 @@ type Theme = {
   updatedAt: string;
   install?: {
     supportLevel: ThemeSupportLevel;
-    adapter: "codex-native-v1" | "codexskin-runtime-v1" | "codex-styler-v1";
+    adapter: "dream-skin-runtime-v1" | "codex-native-v1" | "codexskin-runtime-v1" | "codex-styler-v1";
     action: "guided-import" | "view-source";
     requiresUserConfirmation: true;
-    rollback: "restore-point" | "unavailable";
+    rollback: "restore-point" | "upstream-restore" | "unavailable";
   };
 };
 
@@ -69,10 +69,10 @@ type InstallGuide = {
   supportLevel: ThemeSupportLevel;
 };
 
-const filters = ["全部", "桌面端", "CLI", "深色", "浅色", "双模式"] as const;
+const filters = ["全部", "完整皮肤", "轻量配色", "桌面端", "CLI", "深色", "浅色", "双模式"] as const;
 
 const githubRepoUrl = "https://github.com/0xagata-prog/skindex";
-const skillSourceUrl = `${githubRepoUrl}/tree/v0.5.2/skill`;
+const skillSourceUrl = `${githubRepoUrl}/tree/v0.6.0/skill`;
 const skindexOrigin = "https://codex-skindex.vercel.app";
 const SKINDEX_SKILL_READY_KEY = "skindex-skill-ready-v3";
 const SKINDEX_SAVED_KEY = "skindex-saved-v1";
@@ -118,6 +118,23 @@ skindex_request=${request}`);
 
 function getInstallGuide(theme: Theme): InstallGuide {
   const install = theme.install ?? getThemeInstallability(theme);
+  if (install.supportLevel === "full-skin-source") {
+    return {
+      kind: "skin",
+      buttonLabel: "查看完整皮肤",
+      eyebrow: "完整皮肤 · Dream Skin",
+      title: `${theme.name} 已有真实运行版本`,
+      description: "这不是一张概念图，也不只是换颜色：源项目通过本机 CDP 提供连续背景、原生交互控件、主题切换和恢复。SkinDex 正在为它建设统一审核与安全适配器，完成前先保留原项目安装边界。",
+      steps: ["查看真实预览、平台说明与素材权利", "按源项目说明安装或切换", "等待 SkinDex Runtime 完成统一的一键流程"],
+      primaryUrl: theme.sourceUrl,
+      primaryLabel: "打开 Dream Skin ↗",
+      secondaryUrl: theme.downloadUrl,
+      secondaryLabel: "查看快速开始 ↗",
+      canUseInCodex: false,
+      statusLabel: "完整皮肤 · 源项目可用",
+      supportLevel: install.supportLevel,
+    };
+  }
   if (install.action === "guided-import") {
     const isLabConcept = install.supportLevel === "partial";
     const copyValue = buildNativeThemePayload(theme);
@@ -417,6 +434,7 @@ export default function Home() {
     setSubmitState("sending");
     setSubmitMessage("");
     try {
+      if (!data.getAll("capabilities").length) throw new Error("请至少选择一项真实可用的皮肤能力");
       const response = await fetch("/api/submissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -425,6 +443,9 @@ export default function Home() {
           authorName: data.get("authorName"),
           repoUrl: data.get("repoUrl"),
           platform: data.get("platform"),
+          engine: data.get("engine"),
+          capabilities: data.getAll("capabilities"),
+          verifiedInCodex: data.get("verifiedInCodex") === "on",
           notes: data.get("notes"),
           website: data.get("website"),
           publicationConsent: data.get("publicationConsent") === "on",
@@ -440,7 +461,7 @@ export default function Home() {
       }
       form.reset();
       setSubmitState("success");
-      setSubmitMessage(`投稿已进入审核队列，编号 ${result.submission.id.slice(0, 8)}。审核通过前不会出现在官网；我们只保存仓库信息，不复制你的素材。`);
+      setSubmitMessage(`投稿已进入审核队列，编号 ${result.submission.id.slice(0, 8)}。审核通过前不会出现在官网；我们只保存仓库、引擎和能力声明，不复制你的素材。`);
     } catch (error) {
       setSubmitState("error");
       setSubmitMessage(error instanceof Error ? error.message : "投稿保存失败");
@@ -453,15 +474,15 @@ export default function Home() {
     <main>
       <header className="site-header">
         <a className="brand" href="#top" aria-label="SkinDex 首页"><span>S</span><strong>SkinDex</strong></a>
-        <nav aria-label="主导航"><a href="#skill">主题 Skill</a><a href="#themes">真实主题</a><a href="#sources">数据来源</a><button onClick={() => setSubmitOpen(true)}>投稿</button></nav>
+        <nav aria-label="主导航"><a href="#skill">SkinDex Skill</a><a href="#themes">皮肤目录</a><a href="#sources">运行基座</a><button onClick={() => setSubmitOpen(true)}>投稿</button></nav>
         <button className="submit-nav" onClick={() => setSkillInstallOpen(true)}>在 Codex 中安装 <span>↗</span></button>
       </header>
 
       <section className="hero real-hero" id="top">
         <div className="hero-copy">
-          <div className="hero-label"><span>LIVE CATALOG</span><i>●</i> 公开来源 · 持久数据</div>
-          <h1>真实主题，<br /><em>真实来源。</em></h1>
-          <p>SkinDex 是你的 Codex 口袋皮肤图鉴：官网负责发现和创作，<b>$skindex</b> Skill 负责在 Codex 里对话切换。</p>
+          <div className="hero-label"><span>CODEX SKIN INDEX</span><i>●</i> 完整皮肤 · 轻量配色 · 真实来源</div>
+          <h1>好玩的 Codex 皮肤，<br /><em>都收进一个口袋。</em></h1>
+          <p>SkinDex 不再只是做配色：官网聚合 Dream Skin 等真实皮肤成品，<b>$skindex</b> 负责发现、创作、投稿，并逐步接入安全的一键切换。</p>
           <div className="hero-actions">
             <button onClick={() => setSkillInstallOpen(true)}>在 Codex 中安装 SkinDex <span>→</span></button>
             <a href="#themes">先浏览主题 ↓</a>
@@ -473,7 +494,7 @@ export default function Home() {
             <kbd>LIVE</kbd>
           </form>
           <div className="hero-stats" aria-label="目录数据">
-            <span><strong>{loading ? "—" : stats.themes}</strong> 个真实主题</span>
+            <span><strong>{loading ? "—" : stats.themes}</strong> 个皮肤与配色</span>
             <span><strong>{loading ? "—" : stats.sources}</strong> 个公开来源</span>
             <span><strong>{loading ? "—" : stats.creators}</strong> 位创作者</span>
           </div>
@@ -495,32 +516,32 @@ export default function Home() {
 
       <section className="skill-section" id="skill">
         <div className="skill-intro">
-          <span className="section-index">01 / CODEX SKILL</span>
-          <div className="skill-route" aria-label="SkinDex 使用路径"><span>官网选主题</span><b>→</b><span>$skindex</span><b>→</b><span>Codex 应用</span></div>
-          <h2>找到喜欢的主题，<br />交给 SkinDex 快捷导入。</h2>
-          <p>官网负责发现主题，<b>$skindex</b> 负责验证、恢复点、复制并打开设置。安装一次，以后换肤只需在 Codex 原生窗口确认。</p>
+          <span className="section-index">01 / AGGREGATION LAYER</span>
+          <div className="skill-route" aria-label="SkinDex 使用路径"><span>官网聚合成品</span><b>→</b><span>$skindex 编排</span><b>→</b><span>运行基座应用</span></div>
+          <h2>官网是皮肤库，<br />Skill 是统一入口。</h2>
+          <p>Dream Skin 负责真实界面运行，SkinDex 负责成品聚合、来源核验、能力标注、创作投稿和未来的一键切换。轻量配色仍可使用原生导入。</p>
           <div className="skill-actions">
             <button onClick={() => setSkillInstallOpen(true)}>安装 SkinDex <span>→</span></button>
             <span>一次安装 · 官网主题统一入口</span>
           </div>
         </div>
         <div className="conversation-grid" aria-label="SkinDex Skill 可以完成的对话">
-          <a href={skindexChatUrl("应用官网的蓝色信使 2007 配色。")}>
-            <span>01 / 应用主题</span><strong>“换成官网这个皮肤”</strong><p>读取主题资料，确认可用范围，再暂存并保留恢复点。</p><b>用 SkinDex 打开 ↗</b>
+          <a href={skindexChatUrl("推荐官网里已经实机验证的完整皮肤，并说明我的系统能不能用。")}>
+            <span>01 / 发现皮肤</span><strong>“给我挑一个真的能用的”</strong><p>按完整皮肤、轻量配色和运行基座分组，不把概念图冒充成品。</p><b>用 SkinDex 打开 ↗</b>
           </a>
           <a href={skindexChatUrl("参考我接下来发送的图片生成原创 Codex 主题。")}>
-            <span>02 / 创作主题</span><strong>“参考这张图做一个”</strong><p>分析视觉语言，生成原创预览并提取可用配色。</p><b>用 SkinDex 打开 ↗</b>
+            <span>02 / 创作皮肤</span><strong>“参考这张图做一个”</strong><p>先明确要做完整 Dream Skin，还是只做可原生导入的轻量配色。</p><b>用 SkinDex 打开 ↗</b>
           </a>
           <a href={skindexChatUrl("把刚生成的主题投稿到 SkinDex。")}>
-            <span>03 / 投稿主题</span><strong>“把这个主题发到官网”</strong><p>先展示将公开的内容，得到确认后再进入审核队列。</p><b>用 SkinDex 打开 ↗</b>
+            <span>03 / 投稿成品</span><strong>“把刚做好的皮肤发到官网”</strong><p>识别引擎与能力，展示投稿清单，得到明确同意后进入私有审核。</p><b>用 SkinDex 打开 ↗</b>
           </a>
         </div>
       </section>
 
       <section className="market" id="themes">
         <div className="market-heading">
-          <div><span className="section-index">02 / REAL THEMES</span><h2>主题目录</h2></div>
-          <p>不使用虚构下载量或作者数据。GitHub 星标、许可和验证版本均显示真实来源信息。</p>
+          <div><span className="section-index">02 / SKIN CATALOG</span><h2>皮肤目录</h2></div>
+          <p>“完整皮肤”和“轻量配色”分开标注；预览、星标、许可、运行基座与验证范围都来自真实来源。</p>
         </div>
         <div className="filter-row">
           <div className="filter-tabs" aria-label="主题筛选">
@@ -558,22 +579,22 @@ export default function Home() {
 
       <section className="sources-section" id="sources">
         <div className="market-heading">
-          <div><span className="section-index">03 / SOURCES</span><h2>主题来源</h2></div>
-          <p>公开项目保留原仓库链接；参考图生成主题由 SkinDex Lab 提炼原创预览与可导入配色。</p>
+          <div><span className="section-index">03 / RUNTIME & SOURCES</span><h2>运行基座与来源</h2></div>
+          <p>SkinDex 是聚合层，不冒充底层运行时；每个成品都保留原作者、原仓库、许可和真实可用范围。</p>
         </div>
         <div className="source-grid">
-          <a href="https://github.com/robinli/codex-material-themes" target="_blank" rel="noreferrer"><span>01</span><h3>Codex Material Themes</h3><p>当前目录收录 7 款可通过 codex-theme-v1 导入的材质配色主题。</p><b>打开 GitHub ↗</b></a>
-          <a href="https://github.com/xuhuanstudio/codex-styler" target="_blank" rel="noreferrer"><span>02</span><h3>Codex Styler</h3><p>开源主题编辑器、场景皮肤与互动伙伴系统。</p><b>打开 GitHub ↗</b></a>
-          <a href="https://github.com/Wangnov/awesome-codex-skins" target="_blank" rel="noreferrer"><span>03</span><h3>Awesome Codex Skins</h3><p>.codexskin 标准、认证注册表和真实应用截图。</p><b>打开 GitHub ↗</b></a>
-          <a href="#themes"><span>04</span><h3>SkinDex Lab</h3><p>把用户参考图转化为原创主题概念、预览和可导入配色。</p><b>查看实验主题 ↑</b></a>
+          <a href="https://github.com/Fei-Away/Codex-Dream-Skin" target="_blank" rel="noreferrer"><span>01</span><h3>Codex Dream Skin</h3><p>当前完整皮肤核心基座：本机 CDP 注入、原生控件、主题切换与恢复，支持 macOS / Windows。</p><b>打开核心仓库 ↗</b></a>
+          <a href="https://github.com/robinli/codex-material-themes" target="_blank" rel="noreferrer"><span>02</span><h3>轻量配色来源</h3><p>保留可通过 codex-theme-v1 导入的材质配色，但不再把它们称作完整 UI 皮肤。</p><b>打开 GitHub ↗</b></a>
+          <a href="#themes"><span>03</span><h3>SkinDex Catalog</h3><p>统一收录第三方成品、创作者投稿和原创主题，并标注是否已实机验证。</p><b>查看目录 ↑</b></a>
+          <a href="#creators"><span>04</span><h3>创作者投稿</h3><p>用 Dream Skin 做完后，可由 Skill 询问是否投稿；未明确同意时始终留在本地。</p><b>查看投稿方式 ↓</b></a>
         </div>
         {syncedAt && <p className="sync-note">数据库响应时间：{new Date(syncedAt).toLocaleString("zh-CN")} · 星标为 2026-07-18 核验快照，最新数据以源仓库为准</p>}
       </section>
 
       <section className="creator-banner" id="creators">
         <div className="creator-dots" aria-hidden="true"><span>G</span><span>H</span><span>✓</span></div>
-        <div><span className="section-index">04 / SUBMIT</span><h2>让你的主题进入目录。</h2><p>可以提交 GitHub 仓库，也可以在 Codex 里通过 Skill 提交生成主题。两种方式都先进入审核，审核通过前不会公开。</p></div>
-        <button onClick={() => setSubmitOpen(true)}>提交主题仓库 <span>↗</span></button>
+        <div><span className="section-index">04 / SUBMIT</span><h2>做完皮肤，就把它收进 SkinDex。</h2><p>Dream Skin 成品可以提交 GitHub 仓库；用 Skill 创作完成后，它也会询问是否投稿。两种方式都先进入私有审核，不会自动公开。</p></div>
+        <button onClick={() => setSubmitOpen(true)}>提交皮肤仓库 <span>↗</span></button>
       </section>
 
       <footer>
@@ -651,7 +672,7 @@ export default function Home() {
           <section className="skill-gate-modal" role="dialog" aria-modal="true" aria-labelledby="skill-gate-title" onMouseDown={(event) => event.stopPropagation()}>
             <button className="modal-close" onClick={() => setPendingTheme(null)} aria-label="关闭 SkinDex 安装确认">×</button>
             <span className="section-index">FIRST USE · INSTALL CHECK</span>
-            <h2 id="skill-gate-title">使用主题前，先确认 SkinDex v0.5.2</h2>
+            <h2 id="skill-gate-title">使用主题前，先确认 SkinDex v0.6.0</h2>
             <p>官网无法读取你电脑上的 Codex 技能列表。未安装时直接打开主题，会让 Codex 无效搜索并浪费时间；请选择你的真实状态。</p>
             <div className="skill-gate-options">
               <button className="install-primary" onClick={() => setSkillInstallOpen(true)}>安装或更新 SkinDex →</button>
@@ -689,9 +710,9 @@ export default function Home() {
         <div className="modal-backdrop" role="presentation" onMouseDown={() => { setSubmitOpen(false); setSubmitState("idle"); }}>
           <section className="submit-modal" role="dialog" aria-modal="true" aria-labelledby="submit-title" onMouseDown={(event) => event.stopPropagation()}>
             <button className="modal-close" onClick={() => { setSubmitOpen(false); setSubmitState("idle"); }} aria-label="关闭投稿窗口">×</button>
-            <span className="section-index">GITHUB SUBMISSION</span>
-            <h2 id="submit-title">提交真实主题仓库</h2>
-            <p>首版不要求账号登录。提交只会进入私有审核队列；我们核验仓库归属、许可、主题文件和真实预览后，审核通过才会公开。</p>
+            <span className="section-index">SKIN REPOSITORY SUBMISSION</span>
+            <h2 id="submit-title">提交完整皮肤或轻量配色</h2>
+            <p>首版不要求账号登录。请如实标注运行引擎和已实现能力；我们核验仓库归属、许可、文件与真实预览后，审核通过才会公开。</p>
             <div className="submission-standard" aria-label="SkinDex 统一上架标准">
               <b>统一上架标准</b>
               <span>横向预览图，建议 16:9</span>
@@ -708,8 +729,11 @@ export default function Home() {
                 <label>作者名称<input name="authorName" required minLength={2} maxLength={60} placeholder="你的 GitHub 名称" /></label>
                 <label>GitHub 仓库<input name="repoUrl" type="url" required pattern="https://github\.com/.+/.+" placeholder="https://github.com/owner/repo" /></label>
                 <label>支持平台<select name="platform" defaultValue="桌面端"><option>桌面端</option><option>CLI</option><option>全平台</option></select></label>
+                <label>运行引擎<select name="engine" defaultValue="dream-skin"><option value="dream-skin">Dream Skin 完整皮肤</option><option value="skindex-native">Codex 原生轻量配色</option><option value="other">其他（人工核验）</option></select></label>
+                <fieldset className="capability-field"><legend>已经实现的能力（至少一项）</legend><label><input type="checkbox" name="capabilities" value="background" />连续背景</label><label><input type="checkbox" name="capabilities" value="palette" />配色</label><label><input type="checkbox" name="capabilities" value="icons" />图标</label><label><input type="checkbox" name="capabilities" value="layout" />布局</label><label><input type="checkbox" name="capabilities" value="motion" />动效</label><label><input type="checkbox" name="capabilities" value="companion" />桌宠 / 伙伴</label><label><input type="checkbox" name="capabilities" value="custom-ui" />自定义 UI</label></fieldset>
+                <label className="review-consent"><input name="verifiedInCodex" type="checkbox" /><span>我已经在真实 Codex 中验证过；未勾选也可以投稿，但会标记为“待实机验证”。</span></label>
                 <label className="notes-field">补充说明<textarea name="notes" maxLength={500} placeholder="主题格式、验证版本或安装方式（可选）" /></label>
-                <label className="review-consent"><input name="publicationConsent" type="checkbox" required /><span>我同意将主题名称、作者名称、仓库链接、平台和补充说明提交审核；只有审核通过后，这些信息才会在官网公开。</span></label>
+                <label className="review-consent"><input name="publicationConsent" type="checkbox" required /><span>我同意将主题名称、作者、仓库、引擎、能力声明和补充说明提交审核；只有审核通过后才会在官网公开。</span></label>
                 <label className="honeypot" aria-hidden="true">Website<input name="website" tabIndex={-1} autoComplete="off" /></label>
                 {submitState === "error" && <p className="form-error" role="alert">{submitMessage}</p>}
                 <button className="primary-action" type="submit" disabled={submitState === "sending"}>{submitState === "sending" ? "正在保存…" : "提交审核 →"}</button>

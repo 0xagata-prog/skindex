@@ -18,7 +18,7 @@ test("uses Codex Skill Installer with GitHub as the canonical source", async () 
   assert.match(page, /我已安装：在 Codex 中打开主题/);
   assert.match(page, /\$skill-installer/);
   assert.match(page, /github\.com\/0xagata-prog\/skindex/);
-  assert.match(page, /skillSourceUrl = `\$\{githubRepoUrl\}\/tree\/v0\.5\.2\/skill`/);
+  assert.match(page, /skillSourceUrl = `\$\{githubRepoUrl\}\/tree\/v0\.6\.0\/skill`/);
   assert.match(page, /SKINDEX_SKILL_READY_KEY = "skindex-skill-ready-v3"/);
   assert.match(page, /return codexPromptUrl\(`\$skindex/);
   assert.doesNotMatch(page, /若不存在，立即停止/);
@@ -43,7 +43,8 @@ test("routes theme actions through declared support levels", async () => {
   ]);
 
   assert.match(themesRoute, /install: getThemeInstallability\(theme\)/);
-  assert.match(capability, /"native" \| "partial" \| "adapter-pending"/);
+  assert.match(capability, /"full-skin-source" \| "native" \| "partial" \| "adapter-pending"/);
+  assert.match(capability, /Fei-Away\/Codex-Dream-Skin/);
   assert.match(capability, /action: "guided-import"/);
   assert.match(capability, /action: "view-source"/);
   assert.match(page, /requestThemeUse\(selected\)/);
@@ -119,9 +120,12 @@ test("keeps every submission private until review approval", async () => {
   assert.match(policy, /status === APPROVED_THEME_STATUS/);
   assert.match(themesRoute, /isPublicThemeStatus\(theme\.status\)/);
   assert.match(themesRoute, /eq\(themes\.status, APPROVED_THEME_STATUS\)/);
-  assert.match(skill, /这个主题已经保存在本地，要不要投稿到 SkinDex 官网/);
+  assert.match(skill, /这个皮肤已经保存在本地，要不要投稿到 SkinDex 官网/);
   assert.match(skill, /this first yes is interest, not upload consent/);
   assert.match(script, /publication: "review-required"/);
+  assert.match(proposalsRoute, /capabilities/);
+  assert.match(submissionsRoute, /verifiedInCodex/);
+  assert.match(skill, /dream-skin-submission-v1/);
 });
 
 test("bounds public submission queues and removes rejected previews", async () => {

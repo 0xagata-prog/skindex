@@ -5,13 +5,13 @@ import { useState } from "react";
 type ReviewKind = "submission" | "proposal";
 type ReviewAction = "approve" | "reject";
 
-export function ReviewActions({ kind, id }: { kind: ReviewKind; id: string }) {
+export function ReviewActions({ kind, id, engine }: { kind: ReviewKind; id: string; engine?: string }) {
   const [state, setState] = useState<"idle" | "working" | "error">("idle");
   const [message, setMessage] = useState("");
 
   const review = async (action: ReviewAction) => {
     const label = action === "approve"
-      ? kind === "proposal" ? "通过并发布这个主题" : "接受这个仓库进入编目"
+      ? kind === "proposal" && engine === "skindex-native" ? "通过并发布这个轻量配色" : "接受并进入人工编目"
       : "拒绝这条投稿";
     if (!window.confirm(`确认${label}？`)) return;
 
@@ -35,7 +35,7 @@ export function ReviewActions({ kind, id }: { kind: ReviewKind; id: string }) {
   return (
     <div className="review-actions">
       <button className="approve" disabled={state === "working"} onClick={() => review("approve")}>
-        {kind === "proposal" ? "通过并发布" : "接受并进入编目"}
+        {kind === "proposal" && engine === "skindex-native" ? "通过并发布" : "接受并进入编目"}
       </button>
       <button className="reject" disabled={state === "working"} onClick={() => review("reject")}>拒绝</button>
       {state === "error" && <p role="alert">{message}</p>}

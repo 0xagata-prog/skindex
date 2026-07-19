@@ -71,6 +71,12 @@ export async function POST(request: Request, context: RouteContext) {
     return Response.json({ review: { id, status: "rejected", public: false, next: "closed" } });
   }
 
+  if (proposal.engine !== "skindex-native") {
+    await getDb().update(themeProposals).set({ status: APPROVED_THEME_STATUS })
+      .where(and(eq(themeProposals.id, id), eq(themeProposals.status, PENDING_REVIEW_STATUS)));
+    return Response.json({ review: { id, status: APPROVED_THEME_STATUS, public: false, next: "curation-required" } });
+  }
+
   const palette = parsePalette(proposal.palette);
   if (palette.length < 3) return Response.json({ error: "主题色板无效，不能发布" }, { status: 409 });
   const identityError = validateThemeIdentity(proposal.themeName, proposal.authorName);

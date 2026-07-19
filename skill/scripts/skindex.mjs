@@ -16,7 +16,9 @@ const FORMAT_ADAPTERS = Object.freeze({
 
 const AVAILABLE_ADAPTERS = new Set(["codex-native-v1"]);
 const DEFAULT_ENDPOINT = "https://codex-skindex.vercel.app";
-const SKILL_VERSION = "0.5.2";
+const SKILL_VERSION = "0.6.0";
+const SUBMISSION_ENGINES = new Set(["dream-skin", "skindex-native", "other"]);
+const SUBMISSION_CAPABILITIES = new Set(["background", "palette", "icons", "layout", "motion", "companion", "custom-ui"]);
 const FORBIDDEN_KEYS = new Set([
   "command",
   "commands",
@@ -610,6 +612,10 @@ export async function submitThemeProposal({
   palette,
   previewPath,
   notes = "",
+  engine = "skindex-native",
+  capabilities = "palette",
+  sourceUrl = "",
+  verifiedInCodex = false,
   consent,
   endpoint = DEFAULT_ENDPOINT,
   fetchImpl = fetch,
@@ -619,6 +625,12 @@ export async function submitThemeProposal({
   if (colors.length < 3 || colors.length > 6 || colors.some((color) => !validHex(color))) {
     throw new Error("palette must contain 3–6 comma-separated hex colors");
   }
+  if (!SUBMISSION_ENGINES.has(engine)) throw new Error("engine must be dream-skin, skindex-native, or other");
+  const declaredCapabilities = String(capabilities).split(",").map((item) => item.trim()).filter(Boolean);
+  if (!declaredCapabilities.length || declaredCapabilities.some((item) => !SUBMISSION_CAPABILITIES.has(item))) {
+    throw new Error("capabilities contains an unsupported value");
+  }
+  if (sourceUrl && !isHttps(sourceUrl)) throw new Error("source-url must use HTTPS");
   const bytes = await readFile(path.resolve(previewPath));
   if (!bytes.length || bytes.length > 700 * 1024) throw new Error("review thumbnail must be between 1 byte and 700 KB");
   const mime = previewMime(previewPath);
@@ -630,6 +642,10 @@ export async function submitThemeProposal({
     notes,
     palette: colors,
     sourceType: "reference-image",
+    engine,
+    capabilities: declaredCapabilities,
+    sourceUrl,
+    verifiedInCodex: verifiedInCodex === true || verifiedInCodex === "yes",
     consent: true,
   }));
   form.set("preview", new Blob([bytes], { type: mime }), path.basename(previewPath));
@@ -712,6 +728,10 @@ async function main() {
       palette: flags.palette,
       previewPath: flags.preview,
       notes: flags.notes ?? "",
+      engine: flags.engine ?? "skindex-native",
+      capabilities: flags.capabilities ?? "palette",
+      sourceUrl: flags["source-url"] ?? "",
+      verifiedInCodex: flags.verified === "yes",
       consent: flags.consent,
       endpoint: flags.endpoint,
     });

@@ -1,4 +1,4 @@
 interface:
   display_name: "SkinDex"
-  short_description: "Codex 口袋皮肤图鉴：发现、生成、切换并投稿主题"
-  default_prompt: "使用 $skindex 从官网推荐一个主题，或根据我发的图片生成一个新主题。"
+  short_description: "聚合完整 Codex 皮肤与轻量配色，并支持创作投稿"
+  default_prompt: "使用 $skindex 从官网推荐真实可用的完整皮肤，或根据我发的图片创作并投稿一个新皮肤。"

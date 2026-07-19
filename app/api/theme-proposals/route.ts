@@ -25,7 +25,19 @@ type ProposalMetadata = {
   palette?: unknown;
   sourceType?: string;
   consent?: boolean;
+  engine?: string;
+  capabilities?: unknown;
+  sourceUrl?: string;
+  verifiedInCodex?: boolean;
 };
+
+const allowedEngines = new Set(["dream-skin", "skindex-native", "other"]);
+const allowedCapabilities = new Set(["background", "palette", "icons", "layout", "motion", "companion", "custom-ui"]);
+
+function safeSourceUrl(value: string) {
+  if (!value) return true;
+  try { return new URL(value).protocol === "https:"; } catch { return false; }
+}
 
 function safeExtension(type: string) {
   if (type === "image/jpeg") return "jpg";
@@ -67,6 +79,9 @@ export async function POST(request: Request) {
     const notes = metadata.notes?.trim() ?? "";
     const palette = Array.isArray(metadata.palette) ? metadata.palette.map(String) : [];
     const sourceType = metadata.sourceType === "reference-image" ? "reference-image" : "skill-generated";
+    const engine = metadata.engine?.trim() || "skindex-native";
+    const capabilities = Array.isArray(metadata.capabilities) ? [...new Set(metadata.capabilities.map(String))] : ["palette"];
+    const sourceUrl = metadata.sourceUrl?.trim().slice(0, 2048) ?? "";
 
     if (metadata.consent !== true) {
       return Response.json({ error: "提交前需要用户明确同意上传预览图并进入审核" }, { status: 400 });
@@ -79,6 +94,11 @@ export async function POST(request: Request) {
     if (!allowedPlatforms.has(platform)) {
       return Response.json({ error: "不支持的平台类型" }, { status: 400 });
     }
+    if (!allowedEngines.has(engine)) return Response.json({ error: "不支持的皮肤引擎" }, { status: 400 });
+    if (!capabilities.length || capabilities.length > 7 || capabilities.some((item) => !allowedCapabilities.has(item))) {
+      return Response.json({ error: "皮肤能力声明无效" }, { status: 400 });
+    }
+    if (!safeSourceUrl(sourceUrl)) return Response.json({ error: "来源链接必须使用 HTTPS" }, { status: 400 });
     if (palette.length < 3 || palette.length > 6 || palette.some((color) => !hexColor.test(color))) {
       return Response.json({ error: "主题色板需包含 3–6 个十六进制颜色" }, { status: 400 });
     }
@@ -103,6 +123,10 @@ export async function POST(request: Request) {
       themeName,
       authorName,
       platform,
+      engine,
+      capabilities: JSON.stringify(capabilities),
+      sourceUrl,
+      verifiedInCodex: metadata.verifiedInCodex === true,
       notes,
       palette: JSON.stringify(palette),
       previewKey: uploadedKey,

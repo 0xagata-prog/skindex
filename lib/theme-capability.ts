@@ -1,4 +1,4 @@
-export type ThemeSupportLevel = "native" | "partial" | "adapter-pending";
+export type ThemeSupportLevel = "full-skin-source" | "native" | "partial" | "adapter-pending";
 
 type ThemeCapabilityInput = {
   sourceRepo: string;
@@ -6,6 +6,16 @@ type ThemeCapabilityInput = {
 };
 
 export function getThemeInstallability(theme: ThemeCapabilityInput) {
+  if (theme.sourceRepo === "Fei-Away/Codex-Dream-Skin") {
+    return {
+      supportLevel: "full-skin-source" as const,
+      adapter: "dream-skin-runtime-v1" as const,
+      action: "view-source" as const,
+      requiresUserConfirmation: true,
+      rollback: "upstream-restore" as const,
+    };
+  }
+
   if (theme.verifiedVersion.includes("codex-theme-v1")) {
     const partial = theme.sourceRepo === "skindex/lab" || theme.sourceRepo === "theme-hub/lab";
     return {
